@@ -145,9 +145,12 @@ class _DaysPageState extends State<DaysPage> {
       body: Column(
         children: [
           Center(
-            child: Text(
-              "Dini Günlər",
-              style: TextStyle(fontSize: 20, fontFamily: 'MyFont2'),
+            child: Padding(
+              padding: EdgeInsets.only(top: 31.0),
+              child: Text(
+                "Dini Günlər",
+                style: TextStyle(fontSize: 20, fontFamily: 'MyFont2'),
+              ),
             ),
           ),
          Padding(
@@ -158,11 +161,11 @@ class _DaysPageState extends State<DaysPage> {
                children: [
                  Padding(
                    padding: const EdgeInsets.only(left: 18.0),
-                   child: Text("Təqvim Görünümü", style: TextStyle(fontSize: 20, fontFamily: 'MyFont2'),),
+                   child: Text("Təqvim", style: TextStyle(fontSize: 20, fontFamily: 'MyFont2'),),
                  ),
                  Spacer(),
                  Padding(
-                   padding: const EdgeInsets.only(right: 18.0, top: 8, bottom: 8),
+                   padding: EdgeInsets.only(right: 12.0, top: 8, bottom: 8),
                    child: Teqvim(),
                  ),
                ],
@@ -187,8 +190,8 @@ class _DaysPageState extends State<DaysPage> {
               DiniGunCard("Hicri Yeni il günü", "Çərşənbə axşamı", "1 Muharrəm 1448", "16 iyun 2026"),
               DiniGunCard("Aşura Günü", "Cümə axşamı", "10 Muharrəm 1448", "25 iyun 2026"),
               DiniGunCard("Mevlid Kandili", "Bazarertəsi", "11 Rəbüiləvvəl 1448", "24 avqust 2026"),
-              DiniGunCard("Üç Aylar Başlanğıcı", "Cümə axşamı", "1 Rəcəb 1447", "10 dekabr 2026"),
-              DiniGunCard("Rəğaib Kandili", "Cümə axşamı", "1 Rəcəb 1447", "10 dekabr 2026"),
+              DiniGunCard("Üç Aylar Başlanğıcı", "Cümə axşamı", "1 Rəcəb 1448", "10 dekabr 2026"),
+              DiniGunCard("Rəğaib Kandili", "Cümə axşamı", "1 Rəcəb 1448", "10 dekabr 2026"),
             ],
           ))
 
