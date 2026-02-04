@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:hijri_date/hijri.dart';
+import 'package:path_provider/path_provider.dart';
 
-// MODEL
 class PrayerTimeResponse {
   final PrayerData data;
   PrayerTimeResponse({required this.data});
@@ -13,16 +14,25 @@ class PrayerTimeResponse {
       data: PrayerData.fromJson(json['data']),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'data': data.toJson(),
+  };
 }
 
 class PrayerData {
   final Timings timings;
   PrayerData({required this.timings});
+
   factory PrayerData.fromJson(Map<String, dynamic> json) {
     return PrayerData(
       timings: Timings.fromJson(json['timings']),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'timings': timings.toJson(),
+  };
 }
 
 class Timings {
@@ -52,27 +62,69 @@ class Timings {
       isha: json['Isha'],
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'Imsak': imsak,
+    'Sunrise': sunrise,
+    'Dhuhr': dhuhr,
+    'Asr': asr,
+    'Maghrib': maghrib,
+    'Isha': isha,
+  };
 }
 
-// SERVICE
 class PrayerService {
-  Future<PrayerTimeResponse?> fetchPrayerTimes() async {
+  final String city;
+  final String country;
+
+  PrayerService({required this.city, required this.country});
+
+  Future<void> _saveToFile(Map<String, dynamic> jsonData) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/namaz_vakitleri.json');
+    await file.writeAsString(jsonEncode(jsonData));
+  }
+
+  Future<Map<String, dynamic>?> _readFromFile() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/namaz_vakitleri.json');
+    if (await file.exists()) {
+      final content = await file.readAsString();
+      return jsonDecode(content);
+    }
+    return null;
+  }
+  Future<PrayerTimeResponse?> _fetchFromApi() async {
     final url = Uri.parse(
-        'https://api.aladhan.com/v1/timingsByCity?city=Baku&country=Azerbaijan&method=13');
+        'https://api.aladhan.com/v1/timingsByCity?city=$city&country=$country&method=13');
 
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
+      await _saveToFile(jsonData);
       return PrayerTimeResponse.fromJson(jsonData);
     } else {
       print('API hatası: ${response.statusCode}');
       return null;
     }
   }
+
+  Future<PrayerTimeResponse?> getPrayerTimes() async {
+    final fileData = await _readFromFile();
+
+    if (fileData != null) {
+      try {
+        return PrayerTimeResponse.fromJson(fileData);
+      } catch (e) {
+        return await _fetchFromApi();
+      }
+    } else {
+      return await _fetchFromApi();
+    }
+  }
 }
 
-// UI
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -97,12 +149,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    fetchPrayerTimes();
+    loadPrayerTimes();
   }
+  void loadPrayerTimes() async {
+    setState(() => loading = true);
 
-  void fetchPrayerTimes() async {
-    final service = PrayerService();
-    final data = await service.fetchPrayerTimes();
+    final service = PrayerService(city: "Baku", country: "Azerbaijan");
+    final data = await service.getPrayerTimes();
+
     setState(() {
       prayerTimes = data;
       loading = false;
@@ -117,14 +171,14 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             children: [
               Padding(
-                padding: EdgeInsets.only(left: 11, right: 13),
+                padding: const EdgeInsets.only(left: 11, right: 13),
                 child: Image.asset(resim, width: 40, height: 40,),
               ),
-              Text("$ad", style: TextStyle(fontSize: 15, fontFamily: 'MyFont2'),),
-              Spacer(),
+              Text(ad, style: const TextStyle(fontSize: 15, fontFamily: 'MyFont2'),),
+              const Spacer(),
               Padding(
-                padding: EdgeInsets.only(right: 15.0),
-                child: Text(saat, style: TextStyle(fontSize: 15, fontFamily: 'MyFont2'),),
+                padding: const EdgeInsets.only(right: 15.0),
+                child: Text(saat, style: const TextStyle(fontSize: 15, fontFamily: 'MyFont2'),),
               )
             ],
           ),
@@ -141,7 +195,6 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.only(top: 44.0, left: 11, right: 11),
         child: Column(
           children: [
-            // HEADER
             Row(
               children: [
                 SizedBox(
@@ -152,20 +205,18 @@ class _HomePageState extends State<HomePage> {
                 Padding(
                   padding: const EdgeInsets.only(left: 8.0),
                   child: Column(
-                    children: [
+                    children: const [
                       Text("Əssələmu Aleykum", style: TextStyle(fontSize: 10, color: Colors.grey, fontFamily: 'MyFont')),
-                      Text("Namaz Vaxtım", style: TextStyle(fontSize: 15, fontFamily: 'MyFont2'),),
+                      Text("Namaz Vaxtım", style: TextStyle(fontSize: 15, fontFamily: 'MyFont2')),
                     ],
                   ),
                 ),
-                Spacer(),
-                IconButton(onPressed: (){}, icon: Icon(Icons.location_on_outlined))
+                const Spacer(),
+                IconButton(onPressed: (){}, icon: const Icon(Icons.location_on_outlined))
               ],
             ),
-
-            // CARD: SONRAKI NAMAZ
             Padding(
-              padding: EdgeInsets.only(top: 20.0),
+              padding: const EdgeInsets.only(top: 20.0),
               child: SizedBox(
                 width: 470,
                 height: 180,
@@ -173,33 +224,32 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.teal,
                   child: Column(
                     children: [
-                      Text("Axşama: ", style: TextStyle(fontSize: 20, fontFamily: 'MyFont2', color: Colors.white)),
-                      Text("01:24:45", style: TextStyle(fontSize: 30, fontFamily: 'MyFont2', color: Colors.white)),
-                      Text("Sonraki vaxt: İşa", style: TextStyle(fontSize: 20, fontFamily: 'MyFont2', color: Colors.white)),
-                      Padding(
-                        padding: EdgeInsets.only(left: 15, right: 15),
-                        child: Divider(),
-                      ),
-                      Text("${now.day} ${months[now.month]} ${now.year}, ${days[now.weekday]}", style: TextStyle(fontSize: 13, fontFamily: 'MyFont2', color: Colors.white)),
-                      Text("${HijriDate.now().toFormat("dd MMMM yyyy")}", style: TextStyle(fontSize: 13, fontFamily: 'MyFont2', color: Colors.white70)),
+                      const SizedBox(height: 15),
+                      const Text("Axşama: ", style: TextStyle(fontSize: 20, fontFamily: 'MyFont2', color: Colors.white)),
+                      const SizedBox(height: 5),
+                      const Text("01:24:45", style: TextStyle(fontSize: 30, fontFamily: 'MyFont2', color: Colors.white)),
+                      const SizedBox(height: 5),
+                      const Divider(color: Colors.white70),
+                      Text("${now.day} ${months[now.month]} ${now.year}, ${days[now.weekday]}", style: const TextStyle(fontSize: 13, fontFamily: 'MyFont2', color: Colors.white)),
+                      Text("${HijriDate.now().toFormat("dd MMMM yyyy")}", style: const TextStyle(fontSize: 13, fontFamily: 'MyFont2', color: Colors.white70)),
                     ],
                   ),
                 ),
               ),
             ),
-
-            // NAMAZ VAKİTLERİ
             loading
-                ? Expanded(child: Center(child: CircularProgressIndicator()))
+                ? const Expanded(child: Center(child: CircularProgressIndicator()))
                 : Expanded(
               child: ListView(
                 children: [
-                  ozelCard("İmsak", "assets/images/imsak.png", prayerTimes!.data.timings.imsak),
-                  ozelCard("Günəş", "assets/images/gunes.png", prayerTimes!.data.timings.sunrise),
-                  ozelCard("Günorta", "assets/images/gunorta.png", prayerTimes!.data.timings.dhuhr),
-                  ozelCard("Əsr", "assets/images/esr.png", prayerTimes!.data.timings.asr),
-                  ozelCard("Axşam", "assets/images/axsam.png", prayerTimes!.data.timings.maghrib),
-                  ozelCard("İşa", "assets/images/isha.png", prayerTimes!.data.timings.isha),
+                  if (prayerTimes != null) ...[
+                    ozelCard("İmsak", "assets/images/imsak.png", prayerTimes!.data.timings.imsak),
+                    ozelCard("Günəş", "assets/images/gunes.png", prayerTimes!.data.timings.sunrise),
+                    ozelCard("Günorta", "assets/images/gunorta.png", prayerTimes!.data.timings.dhuhr),
+                    ozelCard("Əsr", "assets/images/esr.png", prayerTimes!.data.timings.asr),
+                    ozelCard("Axşam", "assets/images/axsam.png", prayerTimes!.data.timings.maghrib),
+                    ozelCard("İşa", "assets/images/isha.png", prayerTimes!.data.timings.isha),
+                  ],
                 ],
               ),
             ),
