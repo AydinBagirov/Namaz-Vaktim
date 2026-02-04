@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import '../location/location_service.dart';
 import 'HomePage.dart';
 
 class ImsakiyePage extends StatefulWidget {
@@ -116,7 +117,7 @@ class _ImsakiyePageState extends State<ImsakiyePage> {
       return;
     }
 
-    // CACHE YOKSA API'DEN ÇEK (SADECE BU AY)
+    // CACHE YOKSA API'DEN ÇEK
     final year = currentMonth.year;
     final month = currentMonth.month;
 
@@ -150,7 +151,7 @@ class _ImsakiyePageState extends State<ImsakiyePage> {
                 int.parse(date['month']['number'].toString()),
                 int.parse(date['day'].toString()),
               ),
-              imsak: _cleanTime(timings['Imsak'].toString()),
+              imsak: _adjustTime(timings['Imsak'].toString(), 10), // 10 dakika ekle
               sunrise: _cleanTime(timings['Sunrise'].toString()),
               dhuhr: _cleanTime(timings['Dhuhr'].toString()),
               asr: _cleanTime(timings['Asr'].toString()),
@@ -187,6 +188,30 @@ class _ImsakiyePageState extends State<ImsakiyePage> {
     return time.substring(0, 5);
   }
 
+  // Vakti belirli dakika kadar ayarla
+  String _adjustTime(String time, int minutesToAdd) {
+    final cleanedTime = _cleanTime(time);
+    final parts = cleanedTime.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+
+    // Toplam dakikayı hesapla
+    int totalMinutes = (hour * 60) + minute + minutesToAdd;
+
+    // Gün aşımı kontrolü (1440 dakika = 24 saat)
+    if (totalMinutes >= 1440) {
+      totalMinutes -= 1440;
+    } else if (totalMinutes < 0) {
+      totalMinutes += 1440;
+    }
+
+    // Yeni saat ve dakikayı hesapla
+    final newHour = (totalMinutes ~/ 60).toString().padLeft(2, '0');
+    final newMinute = (totalMinutes % 60).toString().padLeft(2, '0');
+
+    return '$newHour:$newMinute';
+  }
+
   @override
   Widget build(BuildContext context) {
     final months = [
@@ -202,7 +227,6 @@ class _ImsakiyePageState extends State<ImsakiyePage> {
         ),
         backgroundColor: Colors.teal,
         iconTheme: const IconThemeData(color: Colors.white),
-        // Ay ismi ortada - butonlar yok
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(40),

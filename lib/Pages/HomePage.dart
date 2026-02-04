@@ -6,139 +6,8 @@ import 'package:hijri_date/hijri.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../location/location_service.dart';
 import 'ImsakiyePage.dart';
-
-// Location Model
-class CityLocation {
-  final String name;
-  final String country;
-  final double latitude;
-  final double longitude;
-  final String timezone;
-
-  CityLocation({
-    required this.name,
-    required this.country,
-    required this.latitude,
-    required this.longitude,
-    required this.timezone,
-  });
-
-  Map<String, dynamic> toJson() => {
-    'name': name,
-    'country': country,
-    'latitude': latitude,
-    'longitude': longitude,
-    'timezone': timezone,
-  };
-
-  factory CityLocation.fromJson(Map<String, dynamic> json) {
-    return CityLocation(
-      name: json['name'],
-      country: json['country'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
-      timezone: json['timezone'],
-    );
-  }
-}
-
-// Azerbaycan şehirleri
-class AzerbaijanCities {
-  static final List<CityLocation> cities = [
-    CityLocation(
-      name: 'Bakı',
-      country: 'Azerbaijan',
-      latitude: 40.4093,
-      longitude: 49.8671,
-      timezone: 'Asia/Baku',
-    ),
-    CityLocation(
-      name: 'Gəncə',
-      country: 'Azerbaijan',
-      latitude: 40.6828,
-      longitude: 46.3606,
-      timezone: 'Asia/Baku',
-    ),
-    CityLocation(
-      name: 'Sumqayıt',
-      country: 'Azerbaijan',
-      latitude: 40.5897,
-      longitude: 49.6686,
-      timezone: 'Asia/Baku',
-    ),
-    CityLocation(
-      name: 'Mingəçevir',
-      country: 'Azerbaijan',
-      latitude: 40.7703,
-      longitude: 47.0496,
-      timezone: 'Asia/Baku',
-    ),
-    CityLocation(
-      name: 'Naxçıvan',
-      country: 'Azerbaijan',
-      latitude: 39.2089,
-      longitude: 45.4122,
-      timezone: 'Asia/Baku',
-    ),
-    CityLocation(
-      name: 'Lənkəran',
-      country: 'Azerbaijan',
-      latitude: 38.7536,
-      longitude: 48.8511,
-      timezone: 'Asia/Baku',
-    ),
-    CityLocation(
-      name: 'Şəki',
-      country: 'Azerbaijan',
-      latitude: 41.1919,
-      longitude: 47.1706,
-      timezone: 'Asia/Baku',
-    ),
-    CityLocation(
-      name: 'Quba',
-      country: 'Azerbaijan',
-      latitude: 41.3614,
-      longitude: 48.5133,
-      timezone: 'Asia/Baku',
-    ),
-    CityLocation(
-      name: 'Şamaxı',
-      country: 'Azerbaijan',
-      latitude: 40.6314,
-      longitude: 48.6386,
-      timezone: 'Asia/Baku',
-    ),
-    CityLocation(
-      name: 'Şirvan',
-      country: 'Azerbaijan',
-      latitude: 39.9369,
-      longitude: 48.9208,
-      timezone: 'Asia/Baku',
-    ),
-  ];
-}
-
-// Location Service
-class LocationService {
-  static const String _locationKey = 'saved_location';
-
-  Future<CityLocation?> getSavedLocation() async {
-    final prefs = await SharedPreferences.getInstance();
-    final locationJson = prefs.getString(_locationKey);
-
-    if (locationJson != null) {
-      return CityLocation.fromJson(jsonDecode(locationJson));
-    }
-
-    return null;
-  }
-
-  Future<void> saveLocation(CityLocation location) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_locationKey, jsonEncode(location.toJson()));
-  }
-}
 
 // Prayer Models
 class PrayerTimeResponse {
@@ -209,7 +78,7 @@ class Timings {
   };
 }
 
-// Prayer Service - Güncellenmiş
+// Prayer Service
 class PrayerService {
   Future<void> _saveToFile(Map<String, dynamic> jsonData, String cacheKey) async {
     final dir = await getApplicationDocumentsDirectory();
@@ -281,7 +150,6 @@ class PrayerService {
     return null;
   }
 
-  // 30 günlük vakitleri çek ve kaydet
   Future<void> fetch30DaysPrayerTimes(CityLocation location) async {
     final today = DateTime.now();
 
@@ -289,11 +157,9 @@ class PrayerService {
       final date = today.add(Duration(days: i));
       final cacheKey = _getCacheKey(location, date);
 
-      // Eğer cache'de yoksa çek
       final cached = await _readFromFile(cacheKey);
       if (cached == null) {
         await _fetchFromApi(location, date);
-        // API'ye aşırı yüklenmeyi önlemek için kısa bekleme
         await Future.delayed(const Duration(milliseconds: 300));
       }
     }
@@ -316,64 +182,7 @@ class PrayerService {
   }
 }
 
-// City Selection Dialog
-class CitySelectionDialog extends StatelessWidget {
-  final Function(CityLocation) onCitySelected;
-
-  const CitySelectionDialog({
-    super.key,
-    required this.onCitySelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Şəhər Seçin',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'MyFont2',
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: AzerbaijanCities.cities.length,
-                itemBuilder: (context, index) {
-                  final city = AzerbaijanCities.cities[index];
-                  return ListTile(
-                    leading: const Icon(Icons.location_city, color: Colors.teal),
-                    title: Text(
-                      city.name,
-                      style: const TextStyle(fontFamily: 'MyFont2'),
-                    ),
-                    onTap: () {
-                      onCitySelected(city);
-                      Navigator.of(context).pop();
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// HomePage - Güncellenmiş
+// HomePage
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -422,7 +231,6 @@ class _HomePageState extends State<HomePage> {
     CityLocation? savedLocation = await locationService.getSavedLocation();
 
     if (savedLocation == null) {
-      // Varsayılan olarak Bakı
       savedLocation = AzerbaijanCities.cities.first;
       await locationService.saveLocation(savedLocation);
     }
@@ -434,6 +242,26 @@ class _HomePageState extends State<HomePage> {
     loadPrayerTimes();
   }
 
+  String _adjustTime(String time, int minutesToAdd) {
+    final cleanedTime = time.contains(' ') ? time.split(' ')[0].substring(0, 5) : time.substring(0, 5);
+    final parts = cleanedTime.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+
+    int totalMinutes = (hour * 60) + minute + minutesToAdd;
+
+    if (totalMinutes >= 1440) {
+      totalMinutes -= 1440;
+    } else if (totalMinutes < 0) {
+      totalMinutes += 1440;
+    }
+
+    final newHour = (totalMinutes ~/ 60).toString().padLeft(2, '0');
+    final newMinute = (totalMinutes % 60).toString().padLeft(2, '0');
+
+    return '$newHour:$newMinute';
+  }
+
   void loadPrayerTimes() async {
     if (currentLocation == null) return;
 
@@ -442,14 +270,28 @@ class _HomePageState extends State<HomePage> {
     final service = PrayerService();
     final data = await service.getPrayerTimes(currentLocation!, DateTime.now());
 
-    setState(() {
-      prayerTimes = data;
-      loading = false;
-    });
+    if (data != null) {
+      final adjustedTimings = Timings(
+        imsak: _adjustTime(data.data.timings.imsak, 10),
+        sunrise: data.data.timings.sunrise,
+        dhuhr: data.data.timings.dhuhr,
+        asr: data.data.timings.asr,
+        maghrib: data.data.timings.maghrib,
+        isha: data.data.timings.isha,
+      );
+
+      setState(() {
+        prayerTimes = PrayerTimeResponse(
+          data: PrayerData(timings: adjustedTimings),
+        );
+        loading = false;
+      });
+    } else {
+      setState(() => loading = false);
+    }
 
     hesaplaKalanSure();
 
-    // Arka planda 30 günlük vakitleri çek (kullanıcı beklemez)
     service.fetch30DaysPrayerTimes(currentLocation!).then((_) {
       print('30 günlük namaz vakitleri kaydedildi');
     }).catchError((e) {
@@ -476,7 +318,6 @@ class _HomePageState extends State<HomePage> {
     String? sonrakiAd;
     String? suAnkiVakit;
 
-    // Şu anki vakti ve sonraki vakti bul
     final vakitListesi = vakitler.entries.toList();
     for (int i = 0; i < vakitListesi.length; i++) {
       final entry = vakitListesi[i];
@@ -485,18 +326,15 @@ class _HomePageState extends State<HomePage> {
         sonrakiVakit = entry.value;
         sonrakiAd = entry.key;
 
-        // Şu anki vakit, bir önceki vakittir
         if (i > 0) {
           suAnkiVakit = vakitListesi[i - 1].key;
         } else {
-          // İmsak'tan önceyse, dünün son vakti (İşa)
           suAnkiVakit = 'İşa';
         }
         break;
       }
     }
 
-    // Gece yarısından sonra, İşa'dan sonraysa
     if (sonrakiVakit == null) {
       sonrakiVakit = vakitler.values.first.add(const Duration(days: 1));
       sonrakiAd = vakitler.keys.first;
@@ -522,20 +360,169 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // GPS ile konum al
+  Future<void> _getLocationFromGps() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 15),
+                Text(
+                  'GPS ilə mövqe alınır...',
+                  style: TextStyle(fontFamily: 'MyFont2'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final locationService = LocationService();
+    final location = await locationService.getCurrentLocation();
+
+    if (mounted) Navigator.of(context).pop();
+
+    if (location != null) {
+      setState(() {
+        currentLocation = location;
+      });
+
+      await locationService.saveLocation(location);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '📍 ${location.name} seçildi',
+              style: const TextStyle(fontFamily: 'MyFont2'),
+            ),
+            backgroundColor: Colors.teal,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      loadPrayerTimes();
+    } else {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Xəta', style: TextStyle(fontFamily: 'MyFont2')),
+            content: const Text(
+              'GPS ilə mövqe alına bilmədi. Konum xidmətini açın və yenidən cəhd edin.',
+              style: TextStyle(fontFamily: 'MyFont2'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Bağla', style: TextStyle(fontFamily: 'MyFont2')),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _showCitySelection() async {
     showDialog(
       context: context,
-      builder: (context) => CitySelectionDialog(
-        onCitySelected: (city) async {
-          setState(() {
-            currentLocation = city;
-          });
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Mövqe Seçin',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'MyFont2',
+                ),
+              ),
+              const SizedBox(height: 15),
 
-          final locationService = LocationService();
-          await locationService.saveLocation(city);
+              // GPS BUTONU
+              Card(
+                color: Colors.teal.shade50,
+                child: ListTile(
+                  leading: const Icon(Icons.my_location, color: Colors.teal),
+                  title: const Text(
+                    'GPS ilə mövqe al',
+                    style: TextStyle(
+                      fontFamily: 'MyFont2',
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Ən yaxın şəhəri tapın',
+                    style: TextStyle(fontFamily: 'MyFont2', fontSize: 12),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _getLocationFromGps();
+                  },
+                ),
+              ),
 
-          loadPrayerTimes();
-        },
+              const Divider(height: 30),
+
+              const Text(
+                'Şəhər seçin:',
+                style: TextStyle(fontSize: 14, fontFamily: 'MyFont2', color: Colors.grey),
+              ),
+              const SizedBox(height: 10),
+
+              // ŞEHİR LİSTESİ
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: AzerbaijanCities.cities.length,
+                  itemBuilder: (context, index) {
+                    final city = AzerbaijanCities.cities[index];
+                    final isSelected = currentLocation?.name == city.name;
+
+                    return ListTile(
+                      leading: Icon(
+                        Icons.location_city,
+                        color: isSelected ? Colors.teal : Colors.grey,
+                      ),
+                      title: Text(
+                        city.name,
+                        style: TextStyle(
+                          fontFamily: 'MyFont2',
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? Colors.teal : null,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle, color: Colors.teal)
+                          : null,
+                      onTap: () async {
+                        setState(() => currentLocation = city);
+                        await LocationService().saveLocation(city);
+                        Navigator.of(context).pop();
+                        loadPrayerTimes();
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -640,7 +627,7 @@ class _HomePageState extends State<HomePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ImsakiyePage(),
+                          builder: (context) => ImsakiyePage(location: currentLocation!),
                         ),
                       );
                     }

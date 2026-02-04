@@ -37,7 +37,6 @@ class _BNavBarState extends State<BNavBar> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    const ImsakiyePage(),
     const DaysPage(),
     const SettingsPage(),
   ];
@@ -71,16 +70,12 @@ class _BNavBarState extends State<BNavBar> {
                     onPressed: () => _onItemTapped(0),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.calendar_month),
+                    icon: const Icon(Icons.wb_sunny_sharp),
                     onPressed: () => _onItemTapped(1),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.wb_sunny_sharp),
-                    onPressed: () => _onItemTapped(2),
-                  ),
-                  IconButton(
                     icon: const Icon(Icons.settings),
-                    onPressed: () => _onItemTapped(3),
+                    onPressed: () => _onItemTapped(2),
                   ),
                 ],
               ),
