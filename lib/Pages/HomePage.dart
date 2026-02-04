@@ -6,6 +6,7 @@ import 'package:hijri_date/hijri.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'ImsakiyePage.dart';
 
 // Location Model
 class CityLocation {
@@ -280,6 +281,24 @@ class PrayerService {
     return null;
   }
 
+  // 30 günlük vakitleri çek ve kaydet
+  Future<void> fetch30DaysPrayerTimes(CityLocation location) async {
+    final today = DateTime.now();
+
+    for (int i = 0; i < 30; i++) {
+      final date = today.add(Duration(days: i));
+      final cacheKey = _getCacheKey(location, date);
+
+      // Eğer cache'de yoksa çek
+      final cached = await _readFromFile(cacheKey);
+      if (cached == null) {
+        await _fetchFromApi(location, date);
+        // API'ye aşırı yüklenmeyi önlemek için kısa bekleme
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+    }
+  }
+
   Future<PrayerTimeResponse?> getPrayerTimes(CityLocation location, DateTime date) async {
     final cacheKey = _getCacheKey(location, date);
 
@@ -369,6 +388,7 @@ class _HomePageState extends State<HomePage> {
   late final Ticker _ticker;
   CityLocation? currentLocation;
   String? sonrakiVakitAdi;
+  String? aktifVakit;
 
   final now = DateTime.now();
   final months = [
@@ -428,6 +448,13 @@ class _HomePageState extends State<HomePage> {
     });
 
     hesaplaKalanSure();
+
+    // Arka planda 30 günlük vakitleri çek (kullanıcı beklemez)
+    service.fetch30DaysPrayerTimes(currentLocation!).then((_) {
+      print('30 günlük namaz vakitleri kaydedildi');
+    }).catchError((e) {
+      print('30 günlük veri çekerken hata: $e');
+    });
   }
 
   void hesaplaKalanSure() {
@@ -447,23 +474,39 @@ class _HomePageState extends State<HomePage> {
 
     DateTime? sonrakiVakit;
     String? sonrakiAd;
+    String? suAnkiVakit;
 
-    for (final entry in vakitler.entries) {
+    // Şu anki vakti ve sonraki vakti bul
+    final vakitListesi = vakitler.entries.toList();
+    for (int i = 0; i < vakitListesi.length; i++) {
+      final entry = vakitListesi[i];
+
       if (entry.value.isAfter(now)) {
         sonrakiVakit = entry.value;
         sonrakiAd = entry.key;
+
+        // Şu anki vakit, bir önceki vakittir
+        if (i > 0) {
+          suAnkiVakit = vakitListesi[i - 1].key;
+        } else {
+          // İmsak'tan önceyse, dünün son vakti (İşa)
+          suAnkiVakit = 'İşa';
+        }
         break;
       }
     }
 
+    // Gece yarısından sonra, İşa'dan sonraysa
     if (sonrakiVakit == null) {
       sonrakiVakit = vakitler.values.first.add(const Duration(days: 1));
       sonrakiAd = vakitler.keys.first;
+      suAnkiVakit = 'İşa';
     }
 
     setState(() {
       kalanSure = sonrakiVakit!.difference(now);
       sonrakiVakitAdi = sonrakiAd;
+      aktifVakit = suAnkiVakit;
     });
   }
 
@@ -498,22 +541,52 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget ozelCard(String ad, String resim, String saat) {
+    final bool isAktif = aktifVakit == ad;
+
     return SizedBox(
         height: 60,
         width: 600,
         child: Card(
+          elevation: isAktif ? 8 : 1,
+          color: isAktif ? Colors.teal.shade50 : null,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: isAktif
+                ? const BorderSide(color: Colors.teal, width: 2)
+                : BorderSide.none,
+          ),
           child: Row(
             children: [
               Padding(
                 padding: const EdgeInsets.only(left: 11, right: 13),
-                child: Image.asset(resim, width: 40, height: 40,),
+                child: Image.asset(
+                  resim,
+                  width: 40,
+                  height: 40,
+                ),
               ),
-              Text(ad, style: const TextStyle(fontSize: 15, fontFamily: 'MyFont2'),),
+              Text(
+                ad,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontFamily: 'MyFont2',
+                  fontWeight: isAktif ? FontWeight.bold : FontWeight.normal,
+                  color: isAktif ? Colors.teal.shade700 : null,
+                ),
+              ),
               const Spacer(),
               Padding(
                 padding: const EdgeInsets.only(right: 15.0),
-                child: Text(saat, style: const TextStyle(fontSize: 15, fontFamily: 'MyFont2'),),
-              )
+                child: Text(
+                  saat,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontFamily: 'MyFont2',
+                    fontWeight: isAktif ? FontWeight.bold : FontWeight.normal,
+                    color: isAktif ? Colors.teal.shade700 : null,
+                  ),
+                ),
+              ),
             ],
           ),
         )
@@ -561,6 +634,20 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const Spacer(),
+                IconButton(
+                  onPressed: () {
+                    if (currentLocation != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ImsakiyePage(),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.calendar_month_outlined),
+                  tooltip: 'İmsakiyyə',
+                ),
                 IconButton(
                   onPressed: _showCitySelection,
                   icon: const Icon(Icons.location_on_outlined),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:namazvaktim/Pages/DaysPage.dart';
-import 'package:namazvaktim/Pages/QiblaPage.dart';
+import 'package:namazvaktim/Pages/ImsakiyePage.dart';
 import 'package:namazvaktim/Pages/SettingsPage.dart';
 
 import 'Pages/HomePage.dart';
@@ -37,8 +37,8 @@ class _BNavBarState extends State<BNavBar> {
 
   final List<Widget> _pages = [
     const HomePage(),
+    const ImsakiyePage(),
     const DaysPage(),
-    //const QiblaPage(),
     const SettingsPage(),
   ];
 
@@ -74,13 +74,13 @@ class _BNavBarState extends State<BNavBar> {
                     icon: const Icon(Icons.calendar_month),
                     onPressed: () => _onItemTapped(1),
                   ),
-                  // IconButton(
-                  //   icon: const Icon(Icons.compass_calibration_outlined),
-                  //   onPressed: () => _onItemTapped(2),
-                  // ),
+                  IconButton(
+                    icon: const Icon(Icons.wb_sunny_sharp),
+                    onPressed: () => _onItemTapped(2),
+                  ),
                   IconButton(
                     icon: const Icon(Icons.settings),
-                    onPressed: () => _onItemTapped(2),
+                    onPressed: () => _onItemTapped(3),
                   ),
                 ],
               ),
