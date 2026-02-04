@@ -96,7 +96,12 @@ class PrayerService {
   }
   Future<PrayerTimeResponse?> _fetchFromApi() async {
     final url = Uri.parse(
-        'https://api.aladhan.com/v1/timingsByCity?city=$city&country=$country&method=13');
+        'https://api.aladhan.com/v1/timingsByCity'
+            '?city=$city'
+            '&country=$country'
+            '&method=13'
+            '&timezonestring=Asia/Baku'
+    );
 
     final response = await http.get(url);
 
@@ -154,7 +159,7 @@ class _HomePageState extends State<HomePage> {
   void loadPrayerTimes() async {
     setState(() => loading = true);
 
-    final service = PrayerService(city: "Baku", country: "Azerbaijan");
+    final service = PrayerService(city: "Nakhchivan", country: "Azerbaijan");
     final data = await service.getPrayerTimes();
 
     setState(() {
@@ -206,7 +211,7 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.only(left: 8.0),
                   child: Column(
                     children: const [
-                      Text("Əssələmu Aleykum", style: TextStyle(fontSize: 10, color: Colors.grey, fontFamily: 'MyFont')),
+                      Text("Əssələmu Aleykum", style: TextStyle(fontSize: 10, color: Colors.grey, fontFamily: 'MyFont2')),
                       Text("Namaz Vaxtım", style: TextStyle(fontSize: 15, fontFamily: 'MyFont2')),
                     ],
                   ),
