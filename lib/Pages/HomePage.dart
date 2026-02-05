@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../location/location_service.dart';
+import '../services/notification_service.dart'; // ← YENİ EKLEME
 import 'ImsakiyePage.dart';
 
 // Prayer Models
@@ -286,6 +287,22 @@ class _HomePageState extends State<HomePage> {
         );
         loading = false;
       });
+
+      // 🔔 BİLDİRİMLERİ AYARLA - YENİ EKLEME
+      try {
+        final notificationService = NotificationService();
+        await notificationService.schedulePrayerNotifications(
+          imsak: adjustedTimings.imsak,
+          sunrise: adjustedTimings.sunrise,
+          dhuhr: adjustedTimings.dhuhr,
+          asr: adjustedTimings.asr,
+          maghrib: adjustedTimings.maghrib,
+          isha: adjustedTimings.isha,
+        );
+        print('✅ Bildirimler başarıyla ayarlandı');
+      } catch (e) {
+        print('❌ Bildirim hatası: $e');
+      }
     } else {
       setState(() => loading = false);
     }
@@ -653,7 +670,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       const SizedBox(height: 15),
                       Text(
-                          "${sonrakiVakitAdi ?? 'Yüklənir'}a qədər: ",
+                          "${sonrakiVakitAdi ?? 'Yüklənir'} vaxtına: ",
                           style: const TextStyle(
                               fontSize: 20,
                               fontFamily: 'MyFont2',
@@ -674,7 +691,10 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      const Divider(color: Colors.white70),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 39.0, right: 39.0),
+                        child: Divider(color: Colors.white70),
+                      ),
                       Text(
                           "${now.day} ${months[now.month]} ${now.year}, ${days[now.weekday]}",
                           style: const TextStyle(

@@ -2,11 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:namazvaktim/Pages/DaysPage.dart';
 import 'package:namazvaktim/Pages/ImsakiyePage.dart';
 import 'package:namazvaktim/Pages/SettingsPage.dart';
+import 'package:namazvaktim/Pages/HomePage.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'services/notification_service.dart'; // ← YENİ EKLEME
 
-import 'Pages/HomePage.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // ← YENİ EKLEME
 
-void main() {
-  runApp(MyApp());
+  // Timezone'ları başlat
+  tz.initializeTimeZones(); // ← YENİ EKLEME
+
+  // Bildirimleri başlat
+  final notificationService = NotificationService(); // ← YENİ EKLEME
+  await notificationService.initialize(); // ← YENİ EKLEME
+  await notificationService.requestPermissions(); // ← YENİ EKLEME
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -18,9 +29,9 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: BNavBar(),
+      home: const BNavBar(),
     );
   }
 }
@@ -52,7 +63,7 @@ class _BNavBarState extends State<BNavBar> {
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(bottom: 8.0),
+        padding: const EdgeInsets.only(bottom: 8.0),
         child: Container(
           color: Colors.white,
           height: 100,
@@ -61,7 +72,7 @@ class _BNavBarState extends State<BNavBar> {
               SizedBox(
                   width: 500,
                   height: 52,
-                  child: Card(child: Text("Reklam"),)),
+                  child: Card(child: const Text("Reklam"))),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -80,10 +91,9 @@ class _BNavBarState extends State<BNavBar> {
                 ],
               ),
             ],
-          )
+          ),
         ),
       ),
     );
   }
 }
-
