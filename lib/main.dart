@@ -69,10 +69,6 @@ class _BNavBarState extends State<BNavBar> {
           height: 100,
           child: Column(
             children: [
-              SizedBox(
-                  width: 500,
-                  height: 52,
-                  child: Card(child: const Text("Reklam"))),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
