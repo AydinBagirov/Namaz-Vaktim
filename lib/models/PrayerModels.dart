@@ -5,15 +5,15 @@ class PrayerTimeResponse {
   final PrayerData data;
 
   PrayerTimeResponse({
-    required this.code,
-    required this.status,
+    this.code = 200,
+    this.status = "OK",
     required this.data,
   });
 
   factory PrayerTimeResponse.fromJson(Map<String, dynamic> json) {
     return PrayerTimeResponse(
-      code: json['code'],
-      status: json['status'],
+      code: json['code'] ?? 200,
+      status: json['status'] ?? "OK",
       data: PrayerData.fromJson(json['data']),
     );
   }
@@ -28,27 +28,27 @@ class PrayerTimeResponse {
 // prayer_data.dart
 class PrayerData {
   final Timings timings;
-  final PrayerDate date;
-  final Meta meta;
+  final PrayerDate? date;
+  final Meta? meta;
 
   PrayerData({
     required this.timings,
-    required this.date,
-    required this.meta,
+    this.date,
+    this.meta,
   });
 
   factory PrayerData.fromJson(Map<String, dynamic> json) {
     return PrayerData(
       timings: Timings.fromJson(json['timings']),
-      date: PrayerDate.fromJson(json['date']),
-      meta: Meta.fromJson(json['meta']),
+      date: json['date'] != null ? PrayerDate.fromJson(json['date']) : null,
+      meta: json['meta'] != null ? Meta.fromJson(json['meta']) : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
     'timings': timings.toJson(),
-    'date': date.toJson(),
-    'meta': meta.toJson(),
+    if (date != null) 'date': date!.toJson(),
+    if (meta != null) 'meta': meta!.toJson(),
   };
 }
 
@@ -75,24 +75,24 @@ class Timings {
     required this.maghrib,
     required this.isha,
     required this.imsak,
-    required this.midnight,
-    required this.firstthird,
-    required this.lastthird,
+    this.midnight = "00:00",
+    this.firstthird = "00:00",
+    this.lastthird = "00:00",
   });
 
   factory Timings.fromJson(Map<String, dynamic> json) {
     return Timings(
-      fajr: json['Fajr'],
-      sunrise: json['Sunrise'],
-      dhuhr: json['Dhuhr'],
-      asr: json['Asr'],
-      sunset: json['Sunset'],
-      maghrib: json['Maghrib'],
-      isha: json['Isha'],
-      imsak: json['Imsak'],
-      midnight: json['Midnight'],
-      firstthird: json['Firstthird'],
-      lastthird: json['Lastthird'],
+      fajr: json['Fajr'] ?? "00:00",
+      sunrise: json['Sunrise'] ?? "00:00",
+      dhuhr: json['Dhuhr'] ?? "00:00",
+      asr: json['Asr'] ?? "00:00",
+      sunset: json['Sunset'] ?? "00:00",
+      maghrib: json['Maghrib'] ?? "00:00",
+      isha: json['Isha'] ?? "00:00",
+      imsak: json['Imsak'] ?? "00:00",
+      midnight: json['Midnight'] ?? "00:00",
+      firstthird: json['Firstthird'] ?? "00:00",
+      lastthird: json['Lastthird'] ?? "00:00",
     );
   }
 
@@ -128,8 +128,8 @@ class PrayerDate {
 
   factory PrayerDate.fromJson(Map<String, dynamic> json) {
     return PrayerDate(
-      readable: json['readable'],
-      timestamp: json['timestamp'],
+      readable: json['readable'] ?? "",
+      timestamp: json['timestamp'] ?? "",
       hijri: Hijri.fromJson(json['hijri']),
       gregorian: Gregorian.fromJson(json['gregorian']),
     );
@@ -159,10 +159,10 @@ class Hijri {
 
   factory Hijri.fromJson(Map<String, dynamic> json) {
     return Hijri(
-      date: json['date'],
-      day: json['day'],
-      year: json['year'],
-      method: json['method'],
+      date: json['date'] ?? "",
+      day: json['day'] ?? "",
+      year: json['year'] ?? "",
+      method: json['method'] ?? "",
     );
   }
 
@@ -188,9 +188,9 @@ class Gregorian {
 
   factory Gregorian.fromJson(Map<String, dynamic> json) {
     return Gregorian(
-      date: json['date'],
-      day: json['day'],
-      year: json['year'],
+      date: json['date'] ?? "",
+      day: json['day'] ?? "",
+      year: json['year'] ?? "",
     );
   }
 
@@ -215,9 +215,9 @@ class Meta {
 
   factory Meta.fromJson(Map<String, dynamic> json) {
     return Meta(
-      latitude: json['latitude'].toDouble(),
-      longitude: json['longitude'].toDouble(),
-      timezone: json['timezone'],
+      latitude: (json['latitude'] ?? 0.0).toDouble(),
+      longitude: (json['longitude'] ?? 0.0).toDouble(),
+      timezone: json['timezone'] ?? "Asia/Baku",
     );
   }
 

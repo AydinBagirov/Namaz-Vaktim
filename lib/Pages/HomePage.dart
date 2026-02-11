@@ -1,189 +1,14 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:hijri_date/hijri.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hijri_date/hijri.dart';
+import 'package:namazvaktim/Pages/ImsakiyePage.dart';
+import 'package:namazvaktim/Pages/MapPickerPage.dart';
+import 'package:namazvaktim/models/PrayerModels.dart';
+import 'package:namazvaktim/services/notification_service.dart';
+
 import '../location/location_service.dart';
-import '../services/notification_service.dart'; // ← YENİ EKLEME
-import 'ImsakiyePage.dart';
+import '../services/PrayerService.dart';
 
-// Prayer Models
-class PrayerTimeResponse {
-  final PrayerData data;
-  PrayerTimeResponse({required this.data});
-
-  factory PrayerTimeResponse.fromJson(Map<String, dynamic> json) {
-    return PrayerTimeResponse(
-      data: PrayerData.fromJson(json['data']),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'data': data.toJson(),
-  };
-}
-
-class PrayerData {
-  final Timings timings;
-  PrayerData({required this.timings});
-
-  factory PrayerData.fromJson(Map<String, dynamic> json) {
-    return PrayerData(
-      timings: Timings.fromJson(json['timings']),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'timings': timings.toJson(),
-  };
-}
-
-class Timings {
-  final String imsak;
-  final String sunrise;
-  final String dhuhr;
-  final String asr;
-  final String maghrib;
-  final String isha;
-
-  Timings({
-    required this.imsak,
-    required this.sunrise,
-    required this.dhuhr,
-    required this.asr,
-    required this.maghrib,
-    required this.isha,
-  });
-
-  factory Timings.fromJson(Map<String, dynamic> json) {
-    return Timings(
-      imsak: json['Imsak'],
-      sunrise: json['Sunrise'],
-      dhuhr: json['Dhuhr'],
-      asr: json['Asr'],
-      maghrib: json['Maghrib'],
-      isha: json['Isha'],
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'Imsak': imsak,
-    'Sunrise': sunrise,
-    'Dhuhr': dhuhr,
-    'Asr': asr,
-    'Maghrib': maghrib,
-    'Isha': isha,
-  };
-}
-
-// Prayer Service
-class PrayerService {
-  Future<void> _saveToFile(Map<String, dynamic> jsonData, String cacheKey) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/namaz_vakitleri.json');
-
-    Map<String, dynamic> cache = {};
-    if (await file.exists()) {
-      try {
-        final content = await file.readAsString();
-        cache = jsonDecode(content);
-      } catch (_) {}
-    }
-
-    cache[cacheKey] = jsonData;
-    await file.writeAsString(jsonEncode(cache));
-  }
-
-  Future<Map<String, dynamic>?> _readFromFile(String cacheKey) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/namaz_vakitleri.json');
-
-    if (!await file.exists()) return null;
-
-    try {
-      final content = await file.readAsString();
-      final cache = jsonDecode(content) as Map<String, dynamic>;
-      return cache[cacheKey];
-    } catch (_) {
-      return null;
-    }
-  }
-
-  String _getCacheKey(CityLocation location, DateTime date) {
-    final dateString =
-        "${date.day.toString().padLeft(2, '0')}-"
-        "${date.month.toString().padLeft(2, '0')}-"
-        "${date.year}";
-
-    return "${location.latitude}_${location.longitude}_$dateString";
-  }
-
-  Future<PrayerTimeResponse?> _fetchFromApi(CityLocation location, DateTime date) async {
-    final dateString =
-        "${date.day.toString().padLeft(2, '0')}-"
-        "${date.month.toString().padLeft(2, '0')}-"
-        "${date.year}";
-
-    final url = Uri.parse(
-      'https://api.aladhan.com/v1/timings/$dateString'
-          '?latitude=${location.latitude}'
-          '&longitude=${location.longitude}'
-          '&method=13'
-          '&timezonestring=${location.timezone}',
-    );
-
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        final cacheKey = _getCacheKey(location, date);
-        await _saveToFile(jsonData, cacheKey);
-        return PrayerTimeResponse.fromJson(jsonData);
-      }
-    } catch (e) {
-      print('API hatası: $e');
-    }
-
-    return null;
-  }
-
-  Future<void> fetch30DaysPrayerTimes(CityLocation location) async {
-    final today = DateTime.now();
-
-    for (int i = 0; i < 30; i++) {
-      final date = today.add(Duration(days: i));
-      final cacheKey = _getCacheKey(location, date);
-
-      final cached = await _readFromFile(cacheKey);
-      if (cached == null) {
-        await _fetchFromApi(location, date);
-        await Future.delayed(const Duration(milliseconds: 300));
-      }
-    }
-  }
-
-  Future<PrayerTimeResponse?> getPrayerTimes(CityLocation location, DateTime date) async {
-    final cacheKey = _getCacheKey(location, date);
-
-    final fileData = await _readFromFile(cacheKey);
-
-    if (fileData != null) {
-      try {
-        return PrayerTimeResponse.fromJson(fileData);
-      } catch (e) {
-        return await _fetchFromApi(location, date);
-      }
-    }
-
-    return await _fetchFromApi(location, date);
-  }
-}
-
-// HomePage
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -229,18 +54,81 @@ class _HomePageState extends State<HomePage> {
   Future<void> _initializeLocation() async {
     final locationService = LocationService();
 
+    // Önce kaydedilmiş konum var mı kontrol et
     CityLocation? savedLocation = await locationService.getSavedLocation();
 
-    if (savedLocation == null) {
-      savedLocation = AzerbaijanCities.cities.first;
-      await locationService.saveLocation(savedLocation);
+    if (savedLocation != null) {
+      // Kaydedilmiş konum varsa onu kullan
+      setState(() {
+        currentLocation = savedLocation;
+      });
+      loadPrayerTimes();
+    } else {
+      // İLK AÇILIŞ - Otomatik GPS ile konum al
+      print('🎯 İlk açılış - GPS ile konum alınıyor...');
+
+      setState(() {
+        loading = true;
+      });
+
+      // GPS ile konum almayı dene
+      final gpsLocation = await locationService.getCurrentLocation();
+
+      if (gpsLocation != null) {
+        // GPS başarılı
+        print('✅ GPS konumu alındı: ${gpsLocation.name}');
+        setState(() {
+          currentLocation = gpsLocation;
+        });
+        await locationService.saveLocation(gpsLocation);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '📍 Mövqe təyin edildi: ${gpsLocation.name}',
+                style: const TextStyle(fontFamily: 'MyFont2'),
+              ),
+              backgroundColor: Colors.teal,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+
+        loadPrayerTimes();
+      } else {
+        // GPS başarısız - Varsayılan şehir kullan (Bakı)
+        print('⚠️ GPS alınamadı - Bakı varsayılan olarak seçildi');
+        final defaultCity = AzerbaijanCities.cities.first; // Bakı
+
+        setState(() {
+          currentLocation = defaultCity;
+        });
+        await locationService.saveLocation(defaultCity);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                '⚠️ GPS alınamadı. Bakı seçildi. Ayarlardan dəyişdirə bilərsiniz.',
+                style: TextStyle(fontFamily: 'MyFont2'),
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'Dəyiş',
+                textColor: Colors.white,
+                onPressed: () {
+                  _showCitySelection();
+                },
+              ),
+            ),
+          );
+        }
+
+        loadPrayerTimes();
+      }
     }
-
-    setState(() {
-      currentLocation = savedLocation;
-    });
-
-    loadPrayerTimes();
   }
 
   String _adjustTime(String time, int minutesToAdd) {
@@ -264,31 +152,43 @@ class _HomePageState extends State<HomePage> {
   }
 
   void loadPrayerTimes() async {
-    if (currentLocation == null) return;
+    final location = currentLocation;
+    if (location == null) return;
 
     setState(() => loading = true);
 
     final service = PrayerService();
-    final data = await service.getPrayerTimes(currentLocation!, DateTime.now());
+    final data = await service.getPrayerTimes(location, DateTime.now());
 
     if (data != null) {
       final adjustedTimings = Timings(
         imsak: _adjustTime(data.data.timings.imsak, 10),
+        fajr: data.data.timings.fajr,
         sunrise: data.data.timings.sunrise,
         dhuhr: data.data.timings.dhuhr,
         asr: data.data.timings.asr,
+        sunset: data.data.timings.sunset,
         maghrib: data.data.timings.maghrib,
         isha: data.data.timings.isha,
+        midnight: data.data.timings.midnight,
+        firstthird: data.data.timings.firstthird,
+        lastthird: data.data.timings.lastthird,
       );
 
       setState(() {
         prayerTimes = PrayerTimeResponse(
-          data: PrayerData(timings: adjustedTimings),
+          code: data.code,
+          status: data.status,
+          data: PrayerData(
+            timings: adjustedTimings,
+            date: data.data.date,
+            meta: data.data.meta,
+          ),
         );
         loading = false;
       });
 
-      // 🔔 BİLDİRİMLERİ AYARLA - YENİ EKLEME
+      // 🔔 BİLDİRİMLERİ AYARLA
       try {
         final notificationService = NotificationService();
         await notificationService.schedulePrayerNotifications(
@@ -299,9 +199,9 @@ class _HomePageState extends State<HomePage> {
           maghrib: adjustedTimings.maghrib,
           isha: adjustedTimings.isha,
         );
-        print('✅ Bildirimler başarıyla ayarlandı');
+        print('✅ Bildirişlər uğurla təyin edildi');
       } catch (e) {
-        print('❌ Bildirim hatası: $e');
+        print('❌ Bildiriş xətası: $e');
       }
     } else {
       setState(() => loading = false);
@@ -309,10 +209,11 @@ class _HomePageState extends State<HomePage> {
 
     hesaplaKalanSure();
 
-    service.fetch30DaysPrayerTimes(currentLocation!).then((_) {
-      print('30 günlük namaz vakitleri kaydedildi');
+    // 30 günlük veriyi arka planda indir
+    service.fetch30DaysPrayerTimes(location).then((_) {
+      print('30 günlük namaz vaxtları yaddaşa yazıldı');
     }).catchError((e) {
-      print('30 günlük veri çekerken hata: $e');
+      print('30 günlük məlumat yükləmə xətası: $e');
     });
   }
 
@@ -367,7 +268,8 @@ class _HomePageState extends State<HomePage> {
 
   DateTime _parseTime(String time) {
     final now = DateTime.now();
-    final parts = time.split(':');
+    final cleanedTime = time.contains(' ') ? time.split(' ')[0] : time;
+    final parts = cleanedTime.split(':');
     return DateTime(
       now.year,
       now.month,
@@ -392,7 +294,7 @@ class _HomePageState extends State<HomePage> {
                 CircularProgressIndicator(),
                 SizedBox(height: 15),
                 Text(
-                  'GPS ilə mövqe alınır...',
+                  'GPS ilə dəqiq mövqe alınır...',
                   style: TextStyle(fontFamily: 'MyFont2'),
                 ),
               ],
@@ -418,11 +320,11 @@ class _HomePageState extends State<HomePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '📍 ${location.name} seçildi',
+              '📍 ${location.name}',
               style: const TextStyle(fontFamily: 'MyFont2'),
             ),
             backgroundColor: Colors.teal,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -435,7 +337,7 @@ class _HomePageState extends State<HomePage> {
           builder: (context) => AlertDialog(
             title: const Text('Xəta', style: TextStyle(fontFamily: 'MyFont2')),
             content: const Text(
-              'GPS ilə mövqe alına bilmədi. Konum xidmətini açın və yenidən cəhd edin.',
+              'GPS ilə mövqe alına bilmədi. Mövqe xidmətini açın və yenidən cəhd edin.',
               style: TextStyle(fontFamily: 'MyFont2'),
             ),
             actions: [
@@ -476,7 +378,7 @@ class _HomePageState extends State<HomePage> {
                 child: ListTile(
                   leading: const Icon(Icons.my_location, color: Colors.teal),
                   title: const Text(
-                    'GPS ilə mövqe al',
+                    'GPS ilə avtomatik',
                     style: TextStyle(
                       fontFamily: 'MyFont2',
                       fontWeight: FontWeight.bold,
@@ -484,9 +386,13 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   subtitle: const Text(
-                    'Ən yaxın şəhəri tapın',
+                    'Hal-hazırkı mövqe',
                     style: TextStyle(fontFamily: 'MyFont2', fontSize: 12),
                   ),
+                  trailing: (currentLocation?.isGpsLocation ?? false) &&
+                      !currentLocation!.name.startsWith('Xəritə:')
+                      ? const Icon(Icons.check_circle, color: Colors.teal)
+                      : null,
                   onTap: () {
                     Navigator.of(context).pop();
                     _getLocationFromGps();
@@ -494,10 +400,69 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
+              const SizedBox(height: 10),
+
+              // HARİTA BUTONU
+              Card(
+                color: Colors.blue.shade50,
+                child: ListTile(
+                  leading: const Icon(Icons.map, color: Colors.blue),
+                  title: const Text(
+                    'Xəritədən seç',
+                    style: TextStyle(
+                      fontFamily: 'MyFont2',
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Dəqiq koordinat',
+                    style: TextStyle(fontFamily: 'MyFont2', fontSize: 12),
+                  ),
+                  trailing: (currentLocation?.name.startsWith('Xəritə:') ?? false)
+                      ? const Icon(Icons.check_circle, color: Colors.blue)
+                      : null,
+                  onTap: () async {
+                    Navigator.of(context).pop();
+
+                    // Harita sayfasını aç
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MapPickerPage(
+                          currentLocation: currentLocation,
+                        ),
+                      ),
+                    );
+
+                    // Eğer konum seçildiyse
+                    if (result != null && result is CityLocation) {
+                      setState(() => currentLocation = result);
+                      await LocationService().saveLocation(result);
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '📍 ${result.name}',
+                              style: const TextStyle(fontFamily: 'MyFont2'),
+                            ),
+                            backgroundColor: Colors.blue,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+
+                      loadPrayerTimes();
+                    }
+                  },
+                ),
+              ),
+
               const Divider(height: 30),
 
               const Text(
-                'Şəhər seçin:',
+                'Və ya şəhər seçin:',
                 style: TextStyle(fontSize: 14, fontFamily: 'MyFont2', color: Colors.grey),
               ),
               const SizedBox(height: 10),
@@ -509,7 +474,8 @@ class _HomePageState extends State<HomePage> {
                   itemCount: AzerbaijanCities.cities.length,
                   itemBuilder: (context, index) {
                     final city = AzerbaijanCities.cities[index];
-                    final isSelected = currentLocation?.name == city.name;
+                    final isSelected = currentLocation?.name == city.name &&
+                        !(currentLocation?.isGpsLocation ?? false);
 
                     return ListTile(
                       leading: Icon(
@@ -655,7 +621,7 @@ class _HomePageState extends State<HomePage> {
                 IconButton(
                   onPressed: _showCitySelection,
                   icon: const Icon(Icons.location_on_outlined),
-                  tooltip: 'Şəhər dəyiş',
+                  tooltip: 'Mövqe dəyiş',
                 )
               ],
             ),

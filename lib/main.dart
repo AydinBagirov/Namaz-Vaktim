@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:namazvaktim/Pages/DaysPage.dart';
-import 'package:namazvaktim/Pages/ImsakiyePage.dart';
 import 'package:namazvaktim/Pages/SettingsPage.dart';
 import 'package:namazvaktim/Pages/HomePage.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
-import 'services/notification_service.dart'; // ← YENİ EKLEME
+import 'services/notification_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // ← YENİ EKLEME
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // Timezone'ları başlat
-  tz.initializeTimeZones(); // ← YENİ EKLEME
+  tz.initializeTimeZones();
 
-  // Bildirimleri başlat
-  final notificationService = NotificationService(); // ← YENİ EKLEME
-  await notificationService.initialize(); // ← YENİ EKLEME
-  await notificationService.requestPermissions(); // ← YENİ EKLEME
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  await notificationService.requestPermissions();
 
   runApp(const MyApp());
 }
@@ -26,7 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Namaz Vaxtı',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
