@@ -6,11 +6,7 @@ class EzanService {
 
   // Ezan ses dosyaları (assets/sounds/ klasörüne eklenecek)
   static const Map<String, String> ezanSounds = {
-    'default': 'assets/sounds/ezan_default.mp3',
-    'mecca': 'assets/sounds/ezan_mecca.mp3',
-    'medina': 'assets/sounds/ezan_medina.mp3',
-    'egypt': 'assets/sounds/ezan_egypt.mp3',
-    'turkey': 'assets/sounds/ezan_turkey.mp3',
+    'default': 'assets/sounds/ezan.mp3',
     'notification': '', // Sadece sistem bildirimi
   };
 
@@ -43,7 +39,6 @@ class EzanService {
       print('❌ Ezan çalma hatası: $e');
     }
   }
-
   // Ezan sesini durdur
   static Future<void> stopEzan() async {
     try {

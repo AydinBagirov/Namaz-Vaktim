@@ -162,7 +162,15 @@ class NotificationService {
 
     final tzDate = tz.TZDateTime.from(scheduled, tz.local);
 
-    final androidDetails = playEzan
+    // SharedPreferences'ten selectedEzan ayarını al
+    final prefs = await SharedPreferences.getInstance();
+    final selectedEzan = prefs.getString('selectedEzan') ?? 'default';
+
+    // Ezan switch'i açık VE selectedEzan 'default' ise ezan sesini çal
+    // Aksi halde normal bildirim sesi
+    final shouldPlayEzanSound = playEzan && selectedEzan == 'default';
+
+    final androidDetails = shouldPlayEzanSound
         ? const AndroidNotificationDetails(
       'prayer_times_ezan',
       'Namaz Vaxtları (Ezanlı)',

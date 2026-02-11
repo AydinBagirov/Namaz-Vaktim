@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/ezan_service.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -29,11 +30,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   String selectedEzan = 'default';
 
   final List<Map<String, String>> ezanSounds = [
-    {'id': 'default', 'name': 'Varsayılan Ezan'},
-    {'id': 'mecca', 'name': 'Mekke Ezanı'},
-    {'id': 'medina', 'name': 'Medine Ezanı'},
-    {'id': 'egypt', 'name': 'Mısır Ezanı'},
-    {'id': 'turkey', 'name': 'Türkiye Ezanı'},
+    {'id': 'default', 'name': 'Varsayılan Əzan'},
     {'id': 'notification', 'name': 'Sadece Bildirim Sesi'},
   ];
 
@@ -158,7 +155,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Ezan Səsi',
+                  'Əzan Səsi',
                   style: TextStyle(fontFamily: 'MyFont2'),
                 ),
                 Switch(
@@ -206,7 +203,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       Icon(Icons.volume_up, color: Colors.teal, size: 28),
                       SizedBox(width: 12),
                       Text(
-                        'Ezan Səsi Seçin',
+                        'Əzan Səsi Seçin',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -232,20 +229,41 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         _saveSettings();
                       },
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      // Ezan sesini dinlet
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Ezan səsi çalınır...',
-                            style: TextStyle(fontFamily: 'MyFont2'),
-                          ),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
+                    onPressed: () async {
+                      // Seçili ezan sesini çal
+                      if (selectedEzan == 'default') {
+                        // Ezan sesini çal
+                        await EzanService.playEzan();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Əzan səsi çalınır...',
+                                style: TextStyle(fontFamily: 'MyFont2'),
+                              ),
+                              backgroundColor: Colors.teal,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      } else {
+                        // Normal bildirim sesi mesajı
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Bu seçim normal bildirim səsi istifadə edir',
+                                style: TextStyle(fontFamily: 'MyFont2'),
+                              ),
+                              backgroundColor: Colors.orange,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      }
                     },
                     icon: const Icon(Icons.play_arrow),
                     label: const Text(
@@ -254,6 +272,52 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 45),
+                    ),
+                  ),
+
+                  //DAYANDIR
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      // Seçili ezan sesini durdur
+                      if (selectedEzan == 'default') {
+                        await EzanService.stopEzan();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Əzan səsi dayandırıldı...',
+                                style: TextStyle(fontFamily: 'MyFont2'),
+                              ),
+                              backgroundColor: Colors.teal,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      } else {
+                        // Normal bildirim sesi mesajı
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Bu seçim normal bildirim səsi istifadə edir',
+                                style: TextStyle(fontFamily: 'MyFont2'),
+                              ),
+                              backgroundColor: Colors.orange,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.stop),
+                    label: const Text(
+                      'Dayandır',
+                      style: TextStyle(fontFamily: 'MyFont2'),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 45),
                     ),
