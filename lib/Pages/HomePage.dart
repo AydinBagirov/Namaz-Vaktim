@@ -51,6 +51,28 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  // Şehir adını temizleyen ve kısaltan fonksiyon
+  String _getCleanCityName(String? name, {int maxLength = 20}) {
+    if (name == null) return "Yüklənir...";
+
+    String cleanName = name;
+
+    // "GPS: " veya "Xəritə: " öneklerini kaldır
+    if (cleanName.startsWith('GPS: ')) {
+      cleanName = cleanName.substring(5); // "GPS: " 5 karakter
+    }
+    if (cleanName.startsWith('Xəritə: ')) {
+      cleanName = cleanName.substring(8); // "Xəritə: " 8 karakter
+    }
+
+    // Uzun isimleri kısalt
+    if (cleanName.length > maxLength) {
+      return '${cleanName.substring(0, maxLength)}...';
+    }
+
+    return cleanName;
+  }
+
   Future<void> _initializeLocation() async {
     final locationService = LocationService();
 
@@ -86,7 +108,7 @@ class _HomePageState extends State<HomePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '📍 Mövqe təyin edildi: ${gpsLocation.name}',
+                '📍 Mövqe təyin edildi: ${_getCleanCityName(gpsLocation.name)}',
                 style: const TextStyle(fontFamily: 'MyFont2'),
               ),
               backgroundColor: Colors.teal,
@@ -153,14 +175,43 @@ class _HomePageState extends State<HomePage> {
 
   void loadPrayerTimes() async {
     final location = currentLocation;
-    if (location == null) return;
+    if (location == null) {
+      print('⚠️ currentLocation null, vakitler yüklenemiyor');
+      return;
+    }
+
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('🔄 loadPrayerTimes BAŞLADI');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('📍 Şehir ADI: ${location.name}');
+    print('📍 GPS Flag: ${location.isGpsLocation}');
+    print('📍 Koordinatlar: ${location.latitude}, ${location.longitude}');
+    print('📍 Timezone: ${location.timezone}');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     setState(() => loading = true);
 
     final service = PrayerService();
-    final data = await service.getPrayerTimes(location, DateTime.now());
+
+    // ÖNEMLİ: DateTime.now() yerine bugünün tarihini kesin olarak belirt
+    final today = DateTime.now();
+    print('📅 Tarih: ${today.day}/${today.month}/${today.year}');
+
+    final data = await service.getPrayerTimes(location, today);
+
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('🔍 API Response: ${data != null ? "Var" : "Null"}');
 
     if (data != null) {
+      print('✅ VERİ ALINDI');
+      print('🕌 İmsak: ${data.data.timings.imsak}');
+      print('🕌 Günəş: ${data.data.timings.sunrise}');
+      print('🕌 Günorta: ${data.data.timings.dhuhr}');
+      print('🕌 Əsr: ${data.data.timings.asr}');
+      print('🕌 Axşam: ${data.data.timings.maghrib}');
+      print('🕌 İşa: ${data.data.timings.isha}');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
       final adjustedTimings = Timings(
         imsak: _adjustTime(data.data.timings.imsak, 10),
         fajr: data.data.timings.fajr,
@@ -175,18 +226,24 @@ class _HomePageState extends State<HomePage> {
         lastthird: data.data.timings.lastthird,
       );
 
-      setState(() {
-        prayerTimes = PrayerTimeResponse(
-          code: data.code,
-          status: data.status,
-          data: PrayerData(
-            timings: adjustedTimings,
-            date: data.data.date,
-            meta: data.data.meta,
-          ),
-        );
-        loading = false;
-      });
+      print('✏️ Adjusted İmsak: ${adjustedTimings.imsak}');
+
+      if (mounted) {
+        setState(() {
+          prayerTimes = PrayerTimeResponse(
+            code: data.code,
+            status: data.status,
+            data: PrayerData(
+              timings: adjustedTimings,
+              date: data.data.date,
+              meta: data.data.meta,
+            ),
+          );
+          loading = false;
+        });
+        print('✅ STATE GÜNCELLENDİ');
+        print('🎯 Yeni state - İmsak: ${prayerTimes!.data.timings.imsak}');
+      }
 
       // 🔔 BİLDİRİMLERİ AYARLA
       try {
@@ -204,17 +261,23 @@ class _HomePageState extends State<HomePage> {
         print('❌ Bildiriş xətası: $e');
       }
     } else {
+      print('❌ API\'den veri alınamadı - data null');
       setState(() => loading = false);
     }
 
     hesaplaKalanSure();
 
     // 30 günlük veriyi arka planda indir
+    print('📥 30 günlük veri indiriliyor...');
     service.fetch30DaysPrayerTimes(location).then((_) {
-      print('30 günlük namaz vaxtları yaddaşa yazıldı');
+      print('✅ 30 günlük namaz vaxtları yaddaşa yazıldı');
     }).catchError((e) {
-      print('30 günlük məlumat yükləmə xətası: $e');
+      print('❌ 30 günlük məlumat yükləmə xətası: $e');
     });
+
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('🔄 loadPrayerTimes BİTTİ');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   }
 
   void hesaplaKalanSure() {
@@ -320,7 +383,7 @@ class _HomePageState extends State<HomePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '📍 ${location.name}',
+              '📍 ${_getCleanCityName(location.name)}',
               style: const TextStyle(fontFamily: 'MyFont2'),
             ),
             backgroundColor: Colors.teal,
@@ -423,9 +486,12 @@ class _HomePageState extends State<HomePage> {
                       ? const Icon(Icons.check_circle, color: Colors.blue)
                       : null,
                   onTap: () async {
+                    // ÖNCELİKLE DIALOGU KAPAT
                     Navigator.of(context).pop();
 
-                    // Harita sayfasını aç
+                    print('🗺️ Harita sayfası açılıyor...');
+
+                    // SONRA Harita sayfasını aç
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -435,16 +501,25 @@ class _HomePageState extends State<HomePage> {
                       ),
                     );
 
+                    print('🗺️ Haritadan dönüldü. Result: $result');
+
                     // Eğer konum seçildiyse
                     if (result != null && result is CityLocation) {
+                      print('✅ Yeni konum seçildi: ${result.name}');
+                      print('📍 Koordinatlar: ${result.latitude}, ${result.longitude}');
+
                       setState(() => currentLocation = result);
                       await LocationService().saveLocation(result);
 
+                      print('🔄 loadPrayerTimes() çağrılıyor...');
+                      loadPrayerTimes();
+
+                      // SnackBar'ı loadPrayerTimes'dan SONRA göster
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              '📍 ${result.name}',
+                              '📍 ${_getCleanCityName(result.name)}',
                               style: const TextStyle(fontFamily: 'MyFont2'),
                             ),
                             backgroundColor: Colors.blue,
@@ -452,8 +527,8 @@ class _HomePageState extends State<HomePage> {
                           ),
                         );
                       }
-
-                      loadPrayerTimes();
+                    } else {
+                      print('⚠️ Konum seçilmedi veya iptal edildi');
                     }
                   },
                 ),
@@ -593,7 +668,7 @@ class _HomePageState extends State<HomePage> {
                           )
                       ),
                       Text(
-                          currentLocation?.name ?? "Yüklənir...",
+                          _getCleanCityName(currentLocation?.name),
                           style: const TextStyle(
                             fontSize: 15,
                             fontFamily: 'MyFont2',
@@ -688,12 +763,12 @@ class _HomePageState extends State<HomePage> {
               child: ListView(
                 children: [
                   if (prayerTimes != null) ...[
-                    ozelCard("İmsak", "assets/images/imsak.png", prayerTimes!.data.timings.imsak),
-                    ozelCard("Günəş", "assets/images/gunes.png", prayerTimes!.data.timings.sunrise),
-                    ozelCard("Günorta", "assets/images/gunorta.png", prayerTimes!.data.timings.dhuhr),
-                    ozelCard("Əsr", "assets/images/esr.png", prayerTimes!.data.timings.asr),
-                    ozelCard("Axşam", "assets/images/axsam.png", prayerTimes!.data.timings.maghrib),
-                    ozelCard("İşa", "assets/images/isha.png", prayerTimes!.data.timings.isha),
+                    ozelCard("İmsak", "assets/images/imsaklogo.png", prayerTimes!.data.timings.imsak),
+                    ozelCard("Günəş", "assets/images/guneslogo.png", prayerTimes!.data.timings.sunrise),
+                    ozelCard("Günorta", "assets/images/oglelogo.png", prayerTimes!.data.timings.dhuhr),
+                    ozelCard("Əsr", "assets/images/ikindilogom.png", prayerTimes!.data.timings.asr),
+                    ozelCard("Axşam", "assets/images/axsamlogo.png", prayerTimes!.data.timings.maghrib),
+                    ozelCard("İşa", "assets/images/yatsilogo.png", prayerTimes!.data.timings.isha),
                   ],
                 ],
               ),

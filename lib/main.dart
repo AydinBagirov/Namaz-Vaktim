@@ -63,7 +63,7 @@ class _BNavBarState extends State<BNavBar> {
         padding: const EdgeInsets.only(bottom: 8.0),
         child: Container(
           color: Colors.white,
-          height: 100,
+          height: 56,
           child: Column(
             children: [
               Row(

@@ -24,6 +24,7 @@ class PrayerService {
 
     cache[cacheKey] = jsonData;
     await file.writeAsString(jsonEncode(cache));
+    print('💾 Cache kaydedildi: $cacheKey');
   }
 
   Future<Map<String, dynamic>?> _readFromFile(String cacheKey) async {
@@ -48,16 +49,22 @@ class PrayerService {
         "${date.month.toString().padLeft(2, '0')}-"
         "${date.year}";
 
-    // GPS konumu ise koordinatları 2 ondalık basamağa yuvarla
-    // Bu sayede yakın konumlar (~1km) aynı cache'i kullanır
-    if (location.isGpsLocation) {
-      final roundedLat = (location.latitude * 100).round() / 100;
-      final roundedLng = (location.longitude * 100).round() / 100;
-      return "gps_${roundedLat}_${roundedLng}_$dateString";
+    // ÖNEMLİ FİX: Koordinatları aynı hassasiyette yuvarla
+    // 2 ondalık basamak kullan - yaklaşık 1 km hassasiyet
+    final lat = (location.latitude * 100).round() / 100;
+    final lng = (location.longitude * 100).round() / 100;
+
+    // Her zaman GPS/Map konumları için koordinat bazlı key kullan
+    if (location.isGpsLocation || location.name.startsWith('GPS:') || location.name.startsWith('Xəritə:')) {
+      final key = "coord_${lat}_${lng}_$dateString";
+      print('🔑 Cache key (GPS/Xəritə): $key');
+      return key;
     }
 
-    // Normal şehirler için tam koordinat
-    return "city_${location.latitude}_${location.longitude}_$dateString";
+    // Normal şehirler için şehir adı bazlı key
+    final key = "city_${location.name}_$dateString";
+    print('🔑 Cache key (Şəhir): $key');
+    return key;
   }
 
   Future<PrayerTimeResponse?> _fetchFromApi(CityLocation location, DateTime date) async {
@@ -74,6 +81,9 @@ class PrayerService {
           '&timezonestring=${location.timezone}',
     );
 
+    print('🌐 API İsteği: ${location.latitude}, ${location.longitude}');
+    print('📍 Şehir: ${location.name}');
+
     try {
       final response = await http.get(url).timeout(
         const Duration(seconds: 10),
@@ -88,6 +98,8 @@ class PrayerService {
         await _saveToFile(jsonData, cacheKey);
         print('✅ ${date.day}/${date.month} - İndirildi və yadda saxlanıldı');
         return PrayerTimeResponse.fromJson(jsonData);
+      } else {
+        print('❌ API Hata: ${response.statusCode}');
       }
     } catch (e) {
       print('⚠️ API xətası: $e');
@@ -98,6 +110,8 @@ class PrayerService {
 
   Future<PrayerTimeResponse?> getPrayerTimes(CityLocation location, DateTime date) async {
     final cacheKey = _getCacheKey(location, date);
+    print('🔍 Aranan cache key: $cacheKey');
+    print('📍 Konum: ${location.name} (${location.latitude}, ${location.longitude})');
 
     // Önce cache'den bak
     final fileData = await _readFromFile(cacheKey);
@@ -108,6 +122,7 @@ class PrayerService {
         return PrayerTimeResponse.fromJson(fileData);
       } catch (e) {
         print('⚠️ Cache parse xətası: $e');
+        // Cache bozuksa API'den çek
         return await _fetchFromApi(location, date);
       }
     }

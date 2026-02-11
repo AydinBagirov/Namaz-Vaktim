@@ -31,8 +31,21 @@ class _MapPickerPageState extends State<MapPickerPage> {
         widget.currentLocation!.latitude,
         widget.currentLocation!.longitude,
       );
-      selectedLocationName = widget.currentLocation!.name;
+      // Temiz şehir adını göster
+      selectedLocationName = _getCleanCityName(widget.currentLocation!.name);
     }
+  }
+
+  // Şehir adını temizleyen fonksiyon
+  String _getCleanCityName(String name) {
+    // "GPS: " veya "Xəritə: " öneklerini kaldır
+    if (name.startsWith('GPS: ')) {
+      return name.substring(5); // "GPS: " 5 karakter
+    }
+    if (name.startsWith('Xəritə: ')) {
+      return name.substring(8); // "Xəritə: " 8 karakter
+    }
+    return name;
   }
 
   // Koordinatlardan yer adını al (Reverse Geocoding)
@@ -50,7 +63,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
       final response = await http.get(
         url,
         headers: {'User-Agent': 'NamazVaktiApp/1.0'},
-      );
+      ).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -59,9 +72,10 @@ class _MapPickerPageState extends State<MapPickerPage> {
             data['address']?['town'] ??
             data['address']?['village'] ??
             data['address']?['municipality'] ??
-            data['address']?['county'];
+            data['address']?['county'] ??
+            data['address']?['state'];
 
-        if (cityName != null) {
+        if (cityName != null && cityName.isNotEmpty) {
           return cityName;
         }
       }
@@ -74,6 +88,8 @@ class _MapPickerPageState extends State<MapPickerPage> {
 
   // Haritada tıklanan yeri işle
   void _onMapTap(TapPosition tapPosition, LatLng position) async {
+    print('🗺️ Harita tıklandı: ${position.latitude}, ${position.longitude}');
+
     setState(() {
       selectedPosition = position;
       isLoading = true;
@@ -83,6 +99,8 @@ class _MapPickerPageState extends State<MapPickerPage> {
     // Yer adını al
     final name = await _getLocationName(position.latitude, position.longitude);
 
+    print('📍 Alınan yer adı: $name');
+
     setState(() {
       selectedLocationName = name;
       isLoading = false;
@@ -91,18 +109,41 @@ class _MapPickerPageState extends State<MapPickerPage> {
 
   // Seçilen konumu kaydet ve geri dön
   void _confirmLocation() {
-    if (selectedPosition != null) {
-      final location = CityLocation(
-        name: 'Xəritə: $selectedLocationName',
-        country: 'Azerbaijan',
-        latitude: selectedPosition!.latitude,
-        longitude: selectedPosition!.longitude,
-        timezone: 'Asia/Baku',
-        isGpsLocation: true,
+    if (selectedPosition == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Xahiş edirik xəritədən bir mövqe seçin',
+            style: TextStyle(fontFamily: 'MyFont2'),
+          ),
+          backgroundColor: Colors.orange,
+        ),
       );
-
-      Navigator.of(context).pop(location);
+      return;
     }
+
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('✅ KONUM ONAYLANDI');
+    print('📍 Seçilen konum: $selectedLocationName');
+    print('📍 Koordinatlar: ${selectedPosition!.latitude}, ${selectedPosition!.longitude}');
+
+    final location = CityLocation(
+      name: 'Xəritə: $selectedLocationName',
+      country: 'Azerbaijan',
+      latitude: selectedPosition!.latitude,
+      longitude: selectedPosition!.longitude,
+      timezone: 'Asia/Baku',
+      isGpsLocation: true, // Haritadan seçildi, koordinat bazlı
+    );
+
+    print('📦 Oluşturulan CityLocation:');
+    print('   - name: ${location.name}');
+    print('   - latitude: ${location.latitude}');
+    print('   - longitude: ${location.longitude}');
+    print('   - isGpsLocation: ${location.isGpsLocation}');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    Navigator.of(context).pop(location);
   }
 
   @override
@@ -238,7 +279,8 @@ class _MapPickerPageState extends State<MapPickerPage> {
 
                       setState(() {
                         selectedPosition = latLng;
-                        selectedLocationName = position.name.replaceFirst('GPS: ', '');
+                        // Temiz şehir adını göster
+                        selectedLocationName = _getCleanCityName(position.name);
                         isLoading = false;
                       });
 
