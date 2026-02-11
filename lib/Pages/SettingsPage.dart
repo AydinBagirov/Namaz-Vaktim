@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:namazvaktim/Pages/NotificationsPage.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -72,9 +73,16 @@ class _SettingsPageState extends State<SettingsPage> {
             Expanded(
               child: ListView(
                 children: [
-                  ozelCard("Bildiriş Ayarları", "assets/images/bildirish.png"),
+                  GestureDetector(
+                      child: ozelCard("Bildiriş Ayarları", "assets/images/bildirish.png"), onTap: (){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NotificationsPage(),
+                      ),
+                    );
+                  },),
                   ozelCard("Tema", "assets/images/tema.png"),
-                  ozelCard("Konum", "assets/images/konum.png"),
                   ozelCard("Dil", "assets/images/dil.png"),
                   ozelCard("Xəta Bildir", "assets/images/xeta.png"),
                   ozelCard("Əlaqə", "assets/images/elaqe.png"),

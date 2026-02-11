@@ -1,77 +1,72 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest_all.dart' as tz;
-//import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-
+import 'package:timezone/data/latest.dart' as tz;
+import 'ezan_service.dart';
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
-  NotificationService._internal();
+  static final FlutterLocalNotificationsPlugin _notifications =
+  FlutterLocalNotificationsPlugin();
 
-  final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
-  bool _initialized = false;
+  static bool _initialized = false;
 
-  // Bildirim ID'leri
-  static const int imsakId = 1;
-  static const int sunriseId = 2;
-  static const int dhuhrId = 3;
-  static const int asrId = 4;
-  static const int maghribId = 5;
-  static const int ishaId = 6;
-
-  Future<void> initialize() async {
+  // ---------------- INIT ----------------
+  static Future<void> initialize() async {
     if (_initialized) return;
 
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Baku'));
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+    const androidSettings =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const initSettings = InitializationSettings(
+    const iosSettings = DarwinInitializationSettings();
+
+    const settings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
-    //
-    // await _notifications.initialize(initSettings,
-    //   onDidReceiveNotificationResponse: (NotificationResponse details) {
-    //     print('Bildirime tıklandı: ${details.payload}');
-    //   },
-    // );
+
+    await _notifications.initialize(
+      settings: settings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        _onNotificationTapped(response);
+      },
+    );
+    // Android 13+ permission
+    await _notifications
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
 
     _initialized = true;
-    print('✅ Bildirimler başlatıldı');
   }
 
-  Future<void> requestPermissions() async {
-    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-    _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+  // ---------------- TIKLAMA ----------------
+  static void _onNotificationTapped(NotificationResponse response) async {
+    final payload = response.payload;
+    if (payload == null) return;
 
-    if (androidImplementation != null) {
-      await androidImplementation.requestNotificationsPermission();
-      await androidImplementation.requestExactAlarmsPermission();
-    }
+    final parts = payload.split(':');
+    if (parts.length != 2) return;
 
-    final IOSFlutterLocalNotificationsPlugin? iosImplementation =
-    _notifications.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+    if (parts[0] == 'ezan') {
+      final prayerKey = parts[1];
+      final shouldPlay = await EzanService.shouldPlayEzan(prayerKey);
 
-    if (iosImplementation != null) {
-      await iosImplementation.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      if (shouldPlay) {
+        await EzanService.playEzan();
+      }
     }
   }
 
-  Future<void> schedulePrayerNotifications({
+  // ---------------- CANCEL ----------------
+  static Future<void> cancelAll() async {
+    await _notifications.cancelAll();
+  }
+
+  // ---------------- SCHEDULE ALL ----------------
+  static Future<void> schedulePrayerNotifications({
     required String imsak,
     required String sunrise,
     required String dhuhr,
@@ -80,95 +75,115 @@ class NotificationService {
     required String isha,
   }) async {
     await initialize();
-    await cancelAllNotifications();
+    await cancelAll();
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final prefs = await SharedPreferences.getInstance();
 
-    // Her namaz vakti için bildirim ayarla
-    await _scheduleNotification(
-      id: imsakId,
-      title: '🌙 İmsak Vaxtı',
-      body: 'İmsak vaxtı girdi',
-      time: _parseTime(imsak, today),
-    );
+    await _scheduleIfEnabled(
+        1, '🌙 İmsak Vaxtı', 'İmsak vaxtı girdi', imsak, 'imsak',
+        prefs.getBool('imsakNotification') ?? true,
+        prefs.getBool('imsakEzan') ?? false);
 
-    await _scheduleNotification(
-      id: sunriseId,
-      title: '🌅 Günəş Vaxtı',
-      body: 'Günəş vaxtı girdi',
-      time: _parseTime(sunrise, today),
-    );
+    await _scheduleIfEnabled(
+        2, '🌅 Günəş Vaxtı', 'Günəş doğdu', sunrise, 'sunrise',
+        prefs.getBool('sunriseNotification') ?? true,
+        prefs.getBool('sunriseEzan') ?? false);
 
-    await _scheduleNotification(
-      id: dhuhrId,
-      title: '☀️ Günorta Namazı Vaxtı',
-      body: 'Günorta namazı vaxtı girdi',
-      time: _parseTime(dhuhr, today),
-    );
+    await _scheduleIfEnabled(
+        3, '☀️ Günorta Namazı Vaxtı', 'Günorta namazı vaxtı girdi',
+        dhuhr, 'dhuhr',
+        prefs.getBool('dhuhrNotification') ?? true,
+        prefs.getBool('dhuhrEzan') ?? true);
 
-    await _scheduleNotification(
-      id: asrId,
-      title: '🌤️ Əsr Namazı Vaxtı',
-      body: 'Əsr namazı vaxtı girdi',
-      time: _parseTime(asr, today),
-    );
+    await _scheduleIfEnabled(
+        4, '🌤️ Əsr Namazı Vaxtı', 'Əsr namazı vaxtı girdi',
+        asr, 'asr',
+        prefs.getBool('asrNotification') ?? true,
+        prefs.getBool('asrEzan') ?? true);
 
-    await _scheduleNotification(
-      id: maghribId,
-      title: '🌆 Axşam Namazı Vaxtı',
-      body: 'Axşam namazı vaxtı girdi',
-      time: _parseTime(maghrib, today),
-    );
+    await _scheduleIfEnabled(
+        5, '🌆 Axşam Namazı Vaxtı', 'Axşam namazı vaxtı girdi',
+        maghrib, 'maghrib',
+        prefs.getBool('maghribNotification') ?? true,
+        prefs.getBool('maghribEzan') ?? true);
 
-    await _scheduleNotification(
-      id: ishaId,
-      title: '🌃 İşa Namazı Vaxtı',
-      body: 'İşa namazı vaxtı girdi',
-      time: _parseTime(isha, today),
-    );
-
-    // Bildirimleri kaydet
-    await _saveNotificationTimes(imsak, sunrise, dhuhr, asr, maghrib, isha);
-
-    print('✅ Bildirimlər quruldu');
+    await _scheduleIfEnabled(
+        6, '🌃 İşa Namazı Vaxtı', 'İşa namazı vaxtı girdi',
+        isha, 'isha',
+        prefs.getBool('ishaNotification') ?? true,
+        prefs.getBool('ishaEzan') ?? true);
   }
 
-  Future<void> _scheduleNotification({
+  static Future<void> _scheduleIfEnabled(
+      int id,
+      String title,
+      String body,
+      String time,
+      String prayerKey,
+      bool notificationEnabled,
+      bool playEzan,
+      ) async {
+    if (!notificationEnabled) return;
+
+    await _scheduleNotification(
+      id: id,
+      title: title,
+      body: body,
+      time: time,
+      prayerKey: prayerKey,
+      playEzan: playEzan,
+    );
+  }
+
+  // ---------------- TEK BILDIRIM ----------------
+  static Future<void> _scheduleNotification({
     required int id,
     required String title,
     required String body,
-    required DateTime time,
+    required String time,
+    required String prayerKey,
+    required bool playEzan,
   }) async {
-    final now = DateTime.now();
+    if (!time.contains(':')) return;
 
-    // Eğer vakit geçmişse, yarın için ayarla
-    DateTime scheduledTime = time;
-    if (time.isBefore(now)) {
-      scheduledTime = time.add(const Duration(days: 1));
+    final parts = time.split(':');
+    if (parts.length < 2) return;
+
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return;
+
+    final now = DateTime.now();
+    var scheduled = DateTime(now.year, now.month, now.day, hour, minute);
+
+    if (scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
     }
 
-    final tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
+    final tzDate = tz.TZDateTime.from(scheduled, tz.local);
 
-    const androidDetails = AndroidNotificationDetails(
-      'prayer_times',
-      'Namaz Vakitleri',
-      channelDescription: 'Namaz vakitleri bildirimleri',
-      importance: Importance.max,
+    final androidDetails = playEzan
+        ? const AndroidNotificationDetails(
+      'prayer_times_ezan',
+      'Namaz Vaxtları (Ezanlı)',
+      channelDescription: 'Ezanlı bildirişlər',
+      importance: Importance.high,
       priority: Priority.high,
-      showWhen: true,
-      enableVibration: true,
+      sound: RawResourceAndroidNotificationSound('ezan'),
       playSound: true,
-      icon: '@mipmap/ic_launcher',
+    )
+        : const AndroidNotificationDetails(
+      'prayer_times_normal',
+      'Namaz Vaxtları',
+      channelDescription: 'Standart bildirişlər',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
     );
 
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+    const iosDetails = DarwinNotificationDetails();
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -177,79 +192,33 @@ class NotificationService {
       id: id,
       title: title,
       body: body,
+      scheduledDate: tzDate,
+      notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      //uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time, scheduledDate: tzTime, notificationDetails: details,
-    );
-
-    print('📅 Bildirim ayarlandı: $title - ${tzTime.toString()}');
-  }
-
-  DateTime _parseTime(String time, DateTime baseDate) {
-    final cleanTime = time.split(' ')[0].substring(0, 5);
-    final parts = cleanTime.split(':');
-    final hour = int.parse(parts[0]);
-    final minute = int.parse(parts[1]);
-
-    return DateTime(
-      baseDate.year,
-      baseDate.month,
-      baseDate.day,
-      hour,
-      minute,
+      matchDateTimeComponents: DateTimeComponents.time,
+      payload: 'ezan:$prayerKey',
     );
   }
 
-  Future<void> _saveNotificationTimes(
-      String imsak,
-      String sunrise,
-      String dhuhr,
-      String asr,
-      String maghrib,
-      String isha,
-      ) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('notification_times', jsonEncode({
-      'imsak': imsak,
-      'sunrise': sunrise,
-      'dhuhr': dhuhr,
-      'asr': asr,
-      'maghrib': maghrib,
-      'isha': isha,
-    }));
-  }
+  // ---------------- TEST ----------------
+  static Future<void> sendTestNotification() async {
+    await initialize();
 
-  Future<Map<String, String>?> getSavedNotificationTimes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getString('notification_times');
-    if (data != null) {
-      return Map<String, String>.from(jsonDecode(data));
-    }
-    return null;
-  }
+    const androidDetails = AndroidNotificationDetails(
+      'test_channel',
+      'Test Bildirişlər',
+      channelDescription: 'Test üçün',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
 
-  Future<void> cancelAllNotifications() async {
-    await _notifications.cancelAll();
-    print('❌ Tüm bildirimler iptal edildi');
-  }
+    const details = NotificationDetails(android: androidDetails);
 
-  Future<void> cancelNotification(int id) async {
-    await _notifications.cancel(id: id);
-  }
-
-  // Bildirim açık mı kontrol et
-  Future<bool> areNotificationsEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('notifications_enabled') ?? true;
-  }
-
-  // Bildirimleri aç/kapat
-  Future<void> setNotificationsEnabled(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notifications_enabled', enabled);
-
-    if (!enabled) {
-      await cancelAllNotifications();
-    }
+    await _notifications.show(
+      id: 999,
+      title: 'Test Bildiriş',
+      body: 'Bildirim sistemi çalışıyor ✅',
+      notificationDetails: details,
+    );
   }
 }

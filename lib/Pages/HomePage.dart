@@ -248,7 +248,7 @@ class _HomePageState extends State<HomePage> {
       // 🔔 BİLDİRİMLERİ AYARLA
       try {
         final notificationService = NotificationService();
-        await notificationService.schedulePrayerNotifications(
+        await NotificationService.schedulePrayerNotifications(
           imsak: adjustedTimings.imsak,
           sunrise: adjustedTimings.sunrise,
           dhuhr: adjustedTimings.dhuhr,

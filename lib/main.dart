@@ -11,8 +11,7 @@ void main() async {
   tz.initializeTimeZones();
 
   final notificationService = NotificationService();
-  await notificationService.initialize();
-  await notificationService.requestPermissions();
+  await NotificationService.initialize();
 
   runApp(const MyApp());
 }
