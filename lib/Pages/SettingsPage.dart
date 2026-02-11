@@ -62,7 +62,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    "Versiya 1.0.0",
+                    "Versiya 2.0.0",
                     style: TextStyle(
                         fontSize: 10, color: Colors.grey, fontFamily: 'MyFont'),
                   ),
