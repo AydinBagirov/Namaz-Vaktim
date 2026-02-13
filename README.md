@@ -1,6 +1,22 @@
 # namazvaktim
 
-A new Flutter project.
+Privacy Policy
+
+This application does not collect, store, or share any personal user data.
+
+If any data is processed (such as device information), it is used only for app functionality and performance improvement.
+
+The app does not sell or share user data with third parties.
+
+User Rights:
+Users may request data deletion or information about their data by contacting us at:
+
+Email: aydinbagirov219@gmail.com
+
+We will respond within a reasonable time.
+
+Contact:
+aydinbagirov219@gmail.com
 
 ## Getting Started
 
