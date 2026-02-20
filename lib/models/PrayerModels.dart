@@ -1,4 +1,3 @@
-// root_response.dart
 class PrayerTimeResponse {
   final int code;
   final String status;
@@ -25,7 +24,6 @@ class PrayerTimeResponse {
   };
 }
 
-// prayer_data.dart
 class PrayerData {
   final Timings timings;
   final PrayerDate? date;
@@ -52,7 +50,6 @@ class PrayerData {
   };
 }
 
-// timings.dart
 class Timings {
   final String fajr;
   final String sunrise;
@@ -112,7 +109,6 @@ class Timings {
 }
 
 
-// date.dart
 class PrayerDate {
   final String readable;
   final String timestamp;
@@ -143,7 +139,6 @@ class PrayerDate {
   };
 }
 
-// hijri.dart
 class Hijri {
   final String date;
   final String day;
@@ -174,7 +169,6 @@ class Hijri {
   };
 }
 
-// gregorian.dart
 class Gregorian {
   final String date;
   final String day;
@@ -201,7 +195,6 @@ class Gregorian {
   };
 }
 
-// meta.dart
 class Meta {
   final double latitude;
   final double longitude;

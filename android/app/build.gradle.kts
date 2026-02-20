@@ -6,7 +6,6 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-//BIRINCI KOD
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -14,27 +13,27 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.namazvaktim"
+    namespace = "com.shafiicode.namazvaxti"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        isCoreLibraryDesugaringEnabled = true  // ← KOTLIN SYNTAX
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"  // ← ÇİFT TIRNAK
+        jvmTarget = "1.8"
     }
 
     defaultConfig {
-        applicationId = "com.example.namazvaktim"
+        applicationId = "com.shafiicode.namazvaxti"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        multiDexEnabled = true  // ← KOTLIN SYNTAX
+        multiDexEnabled = true
     }
 
     signingConfigs {
@@ -55,7 +54,7 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")  // ← PARANTEZ İLE
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

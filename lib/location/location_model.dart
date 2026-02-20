@@ -3,14 +3,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
-// Location Model
 class CityLocation {
   final String name;
   final String country;
   final double latitude;
   final double longitude;
   final String timezone;
-  final bool isGpsLocation; // GPS və ya xəritədən seçilib?
+  final bool isGpsLocation;
 
   CityLocation({
     required this.name,
@@ -42,7 +41,6 @@ class CityLocation {
   }
 }
 
-// Azerbaycan şehirleri listesi
 class AzerbaijanCities {
   static final List<CityLocation> cities = [
     CityLocation(
@@ -126,11 +124,9 @@ class AzerbaijanCities {
   }
 }
 
-// Location Service
 class LocationService {
   static const String _locationKey = 'saved_location';
 
-  // Kaydedilmiş konumu al
   Future<CityLocation?> getSavedLocation() async {
     final prefs = await SharedPreferences.getInstance();
     final locationJson = prefs.getString(_locationKey);
@@ -142,13 +138,11 @@ class LocationService {
     return null;
   }
 
-  // Konumu kaydet
   Future<void> saveLocation(CityLocation location) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_locationKey, jsonEncode(location.toJson()));
   }
 
-  // Reverse Geocoding - Koordinatlardan şehir adı al
   Future<String> _getCityNameFromCoordinates(double latitude, double longitude) async {
     try {
       final url = Uri.parse(
@@ -168,7 +162,6 @@ class LocationService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // Şehir, kasaba veya köy adını al
         String? cityName = data['address']?['city'] ??
             data['address']?['town'] ??
             data['address']?['village'] ??
@@ -183,14 +176,11 @@ class LocationService {
       print('Reverse geocoding xətası: $e');
     }
 
-    // Eğer API çalışmazsa koordinatları göster
     return '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}';
   }
 
-  // GPS ile konum al - TAM KOORDINATLARLA
   Future<CityLocation?> getCurrentLocation() async {
     try {
-      // Konum izni kontrolü
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         print('Mövqe xidməti bağlıdır');
@@ -211,7 +201,6 @@ class LocationService {
         return null;
       }
 
-      // Mevcut pozisyonu al
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10),
@@ -219,13 +208,11 @@ class LocationService {
 
       print('GPS Koordinatları: ${position.latitude}, ${position.longitude}');
 
-      // Şehir adını al (görüntüleme için)
       String cityName = await _getCityNameFromCoordinates(
         position.latitude,
         position.longitude,
       );
 
-      // GPS konumunu döndür
       return CityLocation(
         name: 'GPS: $cityName',
         country: 'Azerbaijan',
@@ -241,7 +228,6 @@ class LocationService {
     }
   }
 
-  // En yakın şehri bul (kullanılmıyor artık - ama yedek olarak var)
   CityLocation findNearestCity(double latitude, double longitude) {
     CityLocation? nearest;
     double minDistance = double.infinity;

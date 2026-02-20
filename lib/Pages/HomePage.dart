@@ -41,7 +41,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     "Cümə", "Şənbə", "Bazar"
   ];
 
-  // Hicri ay adları Azerbaycan dilinde (hijri_date paketi TR locale döndürür, biz override edirik)
   static const List<String> _hijriMonthsAz = [
     "", "Məhərrəm", "Səfər", "Rəbiüləvvəl", "Rəbiülaxır",
     "Cəmadiyələvvəl", "Cəmadiyəlaxır", "Rəcəb", "Şaban",
@@ -86,7 +85,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   String _getHijriDateText() {
-    // hijri_date paketi kullanılıyor, 1 gün geri alınıyor
     HijriDate.setLocal('tr');
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
     final hijri = HijriDate.fromDate(yesterday);
@@ -576,7 +574,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  // ── PRAYER ROW ──────────────────────────────────────────────────────
   Widget _prayerRow(String ad, String saat) {
     final bool isAktif = aktifVakit == ad;
     final icon = _vakitIkonlar[ad] ?? Icons.access_time_rounded;
@@ -680,7 +677,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       backgroundColor: const Color(0xFF080E1A),
       body: Stack(
         children: [
-          // ── ARKAPLAN ──
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -693,7 +689,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
 
-          // ── DEKORATİF GLOW DAİRELERİ ──
           Positioned(
             top: -80, right: -60,
             child: Container(
@@ -719,12 +714,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
 
-          // ── ANA İÇERİK ──
           SafeArea(
             child: Column(
               children: [
 
-                // ── HEADER ──
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Row(
@@ -770,7 +763,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                 const SizedBox(height: 28),
 
-                // ── COUNTDOWN KARTI ──
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Container(
@@ -793,7 +785,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Tarix + Hicri
                         Row(
                           children: [
                             Container(
@@ -829,7 +820,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                         const SizedBox(height: 20),
 
-                        // Sonraki vakit etiketi
                         Text(
                           sonrakiVakitAdi != null ? "${sonrakiVakitAdi!} vaxtına" : "Yüklənir...",
                           style: const TextStyle(fontFamily: 'MyFont2',
@@ -838,7 +828,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                         const SizedBox(height: 4),
 
-                        // Geri sayım
                         ScaleTransition(
                           scale: _pulseAnimation,
                           child: Text(
@@ -867,7 +856,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                 const SizedBox(height: 22),
 
-                // ── LİSTE BAŞLIK ──
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
@@ -883,7 +871,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                 const SizedBox(height: 8),
 
-                // ── VAKİT LİSTESİ ──
                 loading
                     ? const Expanded(
                   child: Center(

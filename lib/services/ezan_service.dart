@@ -4,10 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class EzanService {
   static final AudioPlayer _audioPlayer = AudioPlayer();
 
-  // Ezan ses dosyaları (assets/sounds/ klasörüne eklenecek)
+
   static const Map<String, String> ezanSounds = {
     'default': 'assets/sounds/ezan.mp3',
-    'notification': '', // Sadece sistem bildirimi
+    'notification': '',
   };
 
   // Ezan sesini çal
@@ -16,7 +16,6 @@ class EzanService {
       final prefs = await SharedPreferences.getInstance();
       final selectedEzan = ezanType ?? prefs.getString('selectedEzan') ?? 'default';
 
-      // Eğer sadece bildirim sesi seçiliyse ezan çalma
       if (selectedEzan == 'notification') {
         print('📢 Sadece bildirim sesi seçili');
         return;
@@ -28,10 +27,10 @@ class EzanService {
         return;
       }
 
-      // Mevcut sesi durdur
+
       await _audioPlayer.stop();
 
-      // Yeni sesi çal
+
       await _audioPlayer.play(AssetSource(soundPath.replaceFirst('assets/', '')));
       print('🔊 Ezan çalınıyor: $selectedEzan');
 
@@ -39,7 +38,7 @@ class EzanService {
       print('❌ Ezan çalma hatası: $e');
     }
   }
-  // Ezan sesini durdur
+
   static Future<void> stopEzan() async {
     try {
       await _audioPlayer.stop();
@@ -49,8 +48,7 @@ class EzanService {
     }
   }
 
-  // Ezan sesini test et (ayarlar sayfasında dinlemek için)
-  static Future<void> previewEzan(String ezanType) async {
+    static Future<void> previewEzan(String ezanType) async {
     try {
       final soundPath = ezanSounds[ezanType];
       if (soundPath == null || soundPath.isEmpty) {
@@ -60,10 +58,9 @@ class EzanService {
 
       await _audioPlayer.stop();
 
-      // İlk 30 saniye çal (önizleme)
       await _audioPlayer.play(AssetSource(soundPath.replaceFirst('assets/', '')));
 
-      // 30 saniye sonra otomatik durdur
+
       Future.delayed(const Duration(seconds: 30), () {
         _audioPlayer.stop();
       });
@@ -74,7 +71,7 @@ class EzanService {
     }
   }
 
-  // Belirli vakit için ezan çalınmalı mı kontrol et
+
   static Future<bool> shouldPlayEzan(String prayerTime) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -101,7 +98,6 @@ class EzanService {
     }
   }
 
-  // Dispose
   static Future<void> dispose() async {
     await _audioPlayer.dispose();
   }

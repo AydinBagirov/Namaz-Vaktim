@@ -153,7 +153,7 @@ class _ImsakiyePageState extends State<ImsakiyePage> {
           SafeArea(
             child: Column(
               children: [
-                // Header
+
                 Padding(
                   padding: const EdgeInsets.fromLTRB(4, 8, 20, 0),
                   child: Row(
@@ -177,7 +177,6 @@ class _ImsakiyePageState extends State<ImsakiyePage> {
                   ),
                 ),
 
-                // Column headers
                 Container(
                   margin: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -194,7 +193,6 @@ class _ImsakiyePageState extends State<ImsakiyePage> {
                   ),
                 ),
 
-                // List
                 Expanded(
                   child: loading
                       ? const Center(child: CircularProgressIndicator(

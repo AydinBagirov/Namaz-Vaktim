@@ -25,30 +25,30 @@ class _MapPickerPageState extends State<MapPickerPage> {
     super.initState();
     mapController = MapController();
 
-    // Eğer mevcut konum varsa onu göster
+
     if (widget.currentLocation != null) {
       selectedPosition = LatLng(
         widget.currentLocation!.latitude,
         widget.currentLocation!.longitude,
       );
-      // Temiz şehir adını göster
+
       selectedLocationName = _getCleanCityName(widget.currentLocation!.name);
     }
   }
 
-  // Şehir adını temizleyen fonksiyon
+
   String _getCleanCityName(String name) {
-    // "GPS: " veya "Xəritə: " öneklerini kaldır
+
     if (name.startsWith('GPS: ')) {
-      return name.substring(5); // "GPS: " 5 karakter
+      return name.substring(5);
     }
     if (name.startsWith('Xəritə: ')) {
-      return name.substring(8); // "Xəritə: " 8 karakter
+      return name.substring(8);
     }
     return name;
   }
 
-  // Koordinatlardan yer adını al (Reverse Geocoding)
+
   Future<String> _getLocationName(double lat, double lng) async {
     try {
       final url = Uri.parse(
@@ -86,7 +86,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
     return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
   }
 
-  // Haritada tıklanan yeri işle
+
   void _onMapTap(TapPosition tapPosition, LatLng position) async {
     print('🗺️ Harita tıklandı: ${position.latitude}, ${position.longitude}');
 
@@ -96,7 +96,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
       selectedLocationName = 'Yüklənir...';
     });
 
-    // Yer adını al
+
     final name = await _getLocationName(position.latitude, position.longitude);
 
     print('📍 Alınan yer adı: $name');
@@ -107,7 +107,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
     });
   }
 
-  // Seçilen konumu kaydet ve geri dön
+
   void _confirmLocation() {
     if (selectedPosition == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -133,7 +133,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
       latitude: selectedPosition!.latitude,
       longitude: selectedPosition!.longitude,
       timezone: 'Asia/Baku',
-      isGpsLocation: true, // Haritadan seçildi, koordinat bazlı
+      isGpsLocation: true,
     );
 
     print('📦 Oluşturulan CityLocation:');
@@ -159,12 +159,12 @@ class _MapPickerPageState extends State<MapPickerPage> {
       ),
       body: Stack(
         children: [
-          // HARİTA
+
           FlutterMap(
             mapController: mapController,
             options: MapOptions(
               initialCenter: selectedPosition ??
-                  const LatLng(40.4093, 49.8671), // Bakı
+                  const LatLng(40.4093, 49.8671),
               initialZoom: selectedPosition != null ? 13.0 : 7.0,
               onTap: _onMapTap,
               interactionOptions: const InteractionOptions(
@@ -172,14 +172,14 @@ class _MapPickerPageState extends State<MapPickerPage> {
               ),
             ),
             children: [
-              // OpenStreetMap - ÜCRETSİZ
+
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.namaz_vakti',
                 maxZoom: 19,
               ),
 
-              // Seçilen Konum İşaretçisi
+
               if (selectedPosition != null)
                 MarkerLayer(
                   markers: [
@@ -198,7 +198,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
             ],
           ),
 
-          // ÜST BİLGİ KARTI
+
           Positioned(
             top: 16,
             left: 16,
@@ -258,7 +258,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
             ),
           ),
 
-          // ALT BUTONLAR
+
           Positioned(
             bottom: 16,
             left: 16,
@@ -266,7 +266,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // GPS KONUMU BUTONU
+
                 ElevatedButton.icon(
                   onPressed: () async {
                     setState(() => isLoading = true);
@@ -279,7 +279,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
 
                       setState(() {
                         selectedPosition = latLng;
-                        // Temiz şehir adını göster
+
                         selectedLocationName = _getCleanCityName(position.name);
                         isLoading = false;
                       });
@@ -315,7 +315,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
 
                 const SizedBox(height: 8),
 
-                // ONAYLA BUTONU
+
                 ElevatedButton.icon(
                   onPressed: selectedPosition != null && !isLoading
                       ? _confirmLocation
@@ -335,7 +335,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
             ),
           ),
 
-          // ZOOM BUTONLARI
+
           Positioned(
             right: 16,
             top: MediaQuery.of(context).size.height / 2 - 60,

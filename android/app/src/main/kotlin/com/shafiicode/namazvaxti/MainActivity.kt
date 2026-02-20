@@ -1,4 +1,4 @@
-package com.example.namazvaktim
+package com.shafiicode.namazvaxti
 
 import io.flutter.embedding.android.FlutterActivity
 

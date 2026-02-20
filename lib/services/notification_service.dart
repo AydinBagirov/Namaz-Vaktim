@@ -10,7 +10,6 @@ class NotificationService {
 
   static bool _initialized = false;
 
-  // ---------------- INIT ----------------
   static Future<void> initialize() async {
     if (_initialized) return;
 
@@ -33,7 +32,6 @@ class NotificationService {
         _onNotificationTapped(response);
       },
     );
-    // Android 13+ permission
     await _notifications
         .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>()
@@ -42,7 +40,6 @@ class NotificationService {
     _initialized = true;
   }
 
-  // ---------------- TIKLAMA ----------------
   static void _onNotificationTapped(NotificationResponse response) async {
     final payload = response.payload;
     if (payload == null) return;
@@ -60,12 +57,10 @@ class NotificationService {
     }
   }
 
-  // ---------------- CANCEL ----------------
   static Future<void> cancelAll() async {
     await _notifications.cancelAll();
   }
 
-  // ---------------- SCHEDULE ALL ----------------
   static Future<void> schedulePrayerNotifications({
     required String imsak,
     required String sunrise,
@@ -135,7 +130,6 @@ class NotificationService {
     );
   }
 
-  // ---------------- TEK BILDIRIM ----------------
   static Future<void> _scheduleNotification({
     required int id,
     required String title,
@@ -162,12 +156,10 @@ class NotificationService {
 
     final tzDate = tz.TZDateTime.from(scheduled, tz.local);
 
-    // SharedPreferences'ten selectedEzan ayarını al
+
     final prefs = await SharedPreferences.getInstance();
     final selectedEzan = prefs.getString('selectedEzan') ?? 'default';
 
-    // Ezan switch'i açık VE selectedEzan 'default' ise ezan sesini çal
-    // Aksi halde normal bildirim sesi
     final shouldPlayEzanSound = playEzan && selectedEzan == 'default';
 
     final androidDetails = shouldPlayEzanSound
@@ -208,7 +200,7 @@ class NotificationService {
     );
   }
 
-  // ---------------- TEST ----------------
+
   static Future<void> sendTestNotification() async {
     await initialize();
 

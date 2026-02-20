@@ -156,7 +156,6 @@ class _DaysPageState extends State<DaysPage> {
           SafeArea(
             child: Column(
               children: [
-                // Header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Row(
@@ -172,7 +171,6 @@ class _DaysPageState extends State<DaysPage> {
 
                 const SizedBox(height: 16),
 
-                // Bölüm başlık
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(children: [

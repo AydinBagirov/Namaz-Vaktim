@@ -76,7 +76,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // App info card
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Container(

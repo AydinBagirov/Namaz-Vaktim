@@ -209,7 +209,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           SafeArea(
             child: Column(
               children: [
-                // Header
+
                 Padding(
                   padding: const EdgeInsets.fromLTRB(4, 8, 20, 0),
                   child: Row(
@@ -231,7 +231,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     children: [
 
-                      // Ezan seçim kartı
                       Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(18),
@@ -378,7 +377,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         ),
                       ),
 
-                      // Bölüm başlık
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Row(children: [
@@ -428,7 +426,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
                       const SizedBox(height: 16),
 
-                      // Toplu butonlar
                       Row(
                         children: [
                           Expanded(

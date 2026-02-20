@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-
 import '../location/location_service.dart';
 import '../models/PrayerModels.dart';
 
@@ -42,26 +40,21 @@ class PrayerService {
     }
   }
 
-  // GPS konumları için yuvarlanmış cache key - internetsiz çalışma için
   String _getCacheKey(CityLocation location, DateTime date) {
     final dateString =
         "${date.day.toString().padLeft(2, '0')}-"
         "${date.month.toString().padLeft(2, '0')}-"
         "${date.year}";
 
-    // ÖNEMLİ FİX: Koordinatları aynı hassasiyette yuvarla
-    // 2 ondalık basamak kullan - yaklaşık 1 km hassasiyet
     final lat = (location.latitude * 100).round() / 100;
     final lng = (location.longitude * 100).round() / 100;
 
-    // Her zaman GPS/Map konumları için koordinat bazlı key kullan
     if (location.isGpsLocation || location.name.startsWith('GPS:') || location.name.startsWith('Xəritə:')) {
       final key = "coord_${lat}_${lng}_$dateString";
       print('🔑 Cache key (GPS/Xəritə): $key');
       return key;
     }
 
-    // Normal şehirler için şehir adı bazlı key
     final key = "city_${location.name}_$dateString";
     print('🔑 Cache key (Şəhir): $key');
     return key;
@@ -113,7 +106,6 @@ class PrayerService {
     print('🔍 Aranan cache key: $cacheKey');
     print('📍 Konum: ${location.name} (${location.latitude}, ${location.longitude})');
 
-    // Önce cache'den bak
     final fileData = await _readFromFile(cacheKey);
 
     if (fileData != null) {
@@ -122,17 +114,14 @@ class PrayerService {
         return PrayerTimeResponse.fromJson(fileData);
       } catch (e) {
         print('⚠️ Cache parse xətası: $e');
-        // Cache bozuksa API'den çek
         return await _fetchFromApi(location, date);
       }
     }
 
-    // Cache'de yoksa API'den çek
     print('🌐 ${date.day}/${date.month} - İnternetdən yüklənir...');
     return await _fetchFromApi(location, date);
   }
 
-  // 30 günlük namaz vakitlerini indir ve kaydet
   Future<void> fetch30DaysPrayerTimes(CityLocation location) async {
     print('📥 30 günlük namaz vaxtları yüklənir...');
     final today = DateTime.now();
@@ -159,7 +148,6 @@ class PrayerService {
     print('   📥 Yükləndi: $downloadedCount gün');
   }
 
-  // Cache durumunu kontrol et
   Future<Map<String, dynamic>> getCacheStatus(CityLocation location) async {
     final today = DateTime.now();
     int cachedDays = 0;
