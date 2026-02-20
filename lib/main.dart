@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:namazvaktim/Pages/DaysPage.dart';
+import 'package:namazvaktim/Pages/QiblaPage.dart';
 import 'package:namazvaktim/Pages/SettingsPage.dart';
 import 'package:namazvaktim/Pages/HomePage.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -46,6 +47,7 @@ class _BNavBarState extends State<BNavBar> {
   final List<Widget> _pages = [
     const HomePage(),
     const DaysPage(),
+    const QiblaPage(),
     const SettingsPage(),
   ];
 
@@ -71,9 +73,10 @@ class _BNavBarState extends State<BNavBar> {
 
   Widget _buildNavBar() {
     final items = [
-      _NavItem(icon: Icons.home_rounded, outlinedIcon: Icons.home_outlined, label: 'Ana Səhifə'),
+      _NavItem(icon: Icons.home_rounded,       outlinedIcon: Icons.home_outlined,       label: 'Ana Səhifə'),
       _NavItem(icon: Icons.auto_awesome_rounded, outlinedIcon: Icons.auto_awesome_outlined, label: 'Dini Günlər'),
-      _NavItem(icon: Icons.settings_rounded, outlinedIcon: Icons.settings_outlined, label: 'Ayarlar'),
+      _NavItem(icon: Icons.explore_rounded,    outlinedIcon: Icons.explore_outlined,    label: 'Qiblə'),
+      _NavItem(icon: Icons.settings_rounded,   outlinedIcon: Icons.settings_outlined,   label: 'Ayarlar'),
     ];
 
     return Container(
@@ -91,7 +94,7 @@ class _BNavBarState extends State<BNavBar> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(items.length, (index) {
@@ -104,7 +107,7 @@ class _BNavBarState extends State<BNavBar> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOut,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFF4ECDC4).withOpacity(0.12)
