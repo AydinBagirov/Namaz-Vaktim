@@ -8,58 +8,56 @@ class DaysPage extends StatefulWidget {
 }
 
 class _DaysPageState extends State<DaysPage> {
-  double _height = 40;
-  double _width = 150;
   bool _isMiladi = true;
-  Widget Teqvim(){
+
+  Widget _toggleWidget() {
     return GestureDetector(
       onTap: () => setState(() => _isMiladi = !_isMiladi),
       child: Container(
-        height: _height,
-        width: _width,
+        height: 36,
+        width: 140,
         decoration: BoxDecoration(
-          color: Color(0xFF14A38B),
-          borderRadius: BorderRadius.circular(_height / 2),
+          color: Colors.white.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white12),
         ),
         child: Stack(
           children: [
             AnimatedAlign(
-              duration: Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
-              alignment: _isMiladi
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.all(2.0),
-                child: Container(
-                  width: _width / 2,
-                  height: _height - 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(_height / 2),
-                  ),
+              alignment: _isMiladi ? Alignment.centerLeft : Alignment.centerRight,
+              child: Container(
+                width: 70,
+                height: 36,
+                margin: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4ECDC4).withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFF4ECDC4).withOpacity(0.5)),
                 ),
               ),
             ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Center(
-                  child: Text(
-                    "Miladi",
-                    style: TextStyle(
-                      color: _isMiladi ? Color(0xFF14A38B) : Colors.white60,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'MyFont2',
-                    ),
+                Expanded(
+                  child: Center(
+                    child: Text("Miladi",
+                        style: TextStyle(
+                          fontFamily: 'MyFont2', fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: _isMiladi ? const Color(0xFF4ECDC4) : Colors.white38,
+                        )),
                   ),
                 ),
-                Text(
-                  "Hicri",
-                  style: TextStyle(
-                      color: !_isMiladi ? Color(0xFF14A38B) : Colors.white60,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'MyFont2'
+                Expanded(
+                  child: Center(
+                    child: Text("Hicri",
+                        style: TextStyle(
+                          fontFamily: 'MyFont2', fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: !_isMiladi ? const Color(0xFF4ECDC4) : Colors.white38,
+                        )),
                   ),
                 ),
               ],
@@ -69,132 +67,153 @@ class _DaysPageState extends State<DaysPage> {
       ),
     );
   }
-  Widget DiniGunCard(String ad, String gun, String hicri, String miladi){
-    return Padding(
-      padding: EdgeInsets.only(left: 18.0, right: 18.0, top: 10),
-      child: Container(
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Color(0xFFE9F7F5),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.brightness_3_outlined,
-                color: Color(0xFF14A38B),
-                size: 24,
-              ),
+
+  Widget _diniGunCard(String ad, String gun, String hicri, String miladi) {
+    return Container(
+      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.07)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFF4ECDC4).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: const Color(0xFF4ECDC4).withOpacity(0.2)),
             ),
-            SizedBox(width: 15),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "$ad",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF1D2939),
+            child: const Icon(Icons.nightlight_round_sharp,
+                color: Color(0xFF4ECDC4), size: 18),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(ad,
+                    style: const TextStyle(
+                        fontFamily: 'MyFont2', fontSize: 14,
+                        fontWeight: FontWeight.w600, color: Colors.white)),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Text(gun,
+                        style: const TextStyle(
+                            fontFamily: 'MyFont2', fontSize: 12, color: Colors.white38)),
+                    const SizedBox(width: 6),
+                    Container(width: 3, height: 3,
+                        decoration: const BoxDecoration(
+                            shape: BoxShape.circle, color: Colors.white24)),
+                    const SizedBox(width: 6),
+                    Text(
+                      _isMiladi ? miladi : hicri,
+                      style: const TextStyle(
+                          fontFamily: 'MyFont2', fontSize: 12,
+                          color: Color(0xFF4ECDC4), fontWeight: FontWeight.w500),
                     ),
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        "$gun",
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                      ),
-                      _isMiladi == true ? Text(
-                        "  •  $miladi",
-                        style: TextStyle(
-                            color: Color(0xFF14A38B),
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13
-                        ),
-                      ): Text(
-              "  •  $hicri",
-              style: TextStyle(
-                  color: Color(0xFF14A38B),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13
-              ),
+                  ],
+                ),
+              ],
             ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 8),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      backgroundColor: const Color(0xFF080E1A),
+      body: Stack(
         children: [
-          Center(
-            child: Padding(
-              padding: EdgeInsets.only(top: 31.0),
-              child: Text(
-                "Dini Günlər",
-                style: TextStyle(fontSize: 20, fontFamily: 'MyFont2'),
+          Positioned(
+            top: -60, right: -40,
+            child: Container(
+              width: 220, height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                    colors: [const Color(0xFF4ECDC4).withOpacity(0.08), Colors.transparent]),
               ),
             ),
           ),
-         Padding(
-           padding: const EdgeInsets.only(left: 18.0, right: 18.0),
-           child: Card(
-             color: Colors.green,
-             child: Row(
-               children: [
-                 Padding(
-                   padding: const EdgeInsets.only(left: 18.0),
-                   child: Text("Təqvim", style: TextStyle(fontSize: 20, fontFamily: 'MyFont2'),),
-                 ),
-                 Spacer(),
-                 Padding(
-                   padding: EdgeInsets.only(right: 12.0, top: 8, bottom: 8),
-                   child: Teqvim(),
-                 ),
-               ],
-             ),
-           ),
-         ),
-          Expanded(child: ListView(
-            children: [
-              DiniGunCard("Miraç Kandili", "Cümə axşamı", "26 Rəcəb 1447", "15 yanvar 2026"),
-              DiniGunCard("Berat Kandili", "Bazarertəsi", "14 Şaban 1447", "2 fevral 2026"),
-              DiniGunCard("Ramazan Başlanğıcı", "Cümə axşamı", "1 Ramazan 1447", "19 fevral 2026"),
-              DiniGunCard("Qədr Gecəsi", "Bazarertəsi", "26 Ramazan 1447", "16 mart 2026"),
-              DiniGunCard("Ramazan Bayramı 1.günü", "Cümə", "1 Şəvval 1447", "20 mart 2026"),
-              DiniGunCard("Ramazan Bayramı 2.günü", "Şənbə", "2 Şəvval 1447", "21 mart 2026"),
-              DiniGunCard("Ramazan Bayramı 3.günü", "Bazar", "3 Şəvval 1447", "22 mart 2026"),
-              DiniGunCard("Tərviyə günü", "Bazarertəsi", "8 Zilhiccə 1447", "25 may 2026"),
-              DiniGunCard("Ərəfə Günü", "Çərşənbə axşamı", "9 Zilhiccə 1447", "26 may 2026"),
-              DiniGunCard("Qurban Bayramı 1.günü", "Çərşənbə", "10 Zilhiccə 1447", "27 may 2026"),
-              DiniGunCard("Qurban Bayramı 2.günü", "Cümə axşamı", "11 Zilhiccə 1447", "28 may 2026"),
-              DiniGunCard("Qurban Bayramı 3.günü", "Cümə", "12 Zilhiccə 1447", "29 may 2026"),
-              DiniGunCard("Qurban Bayramı 4.günü", "Şənbə", "13 Zilhiccə 1447", "30 may 2026"),
-              DiniGunCard("Hicri Yeni il günü", "Çərşənbə axşamı", "1 Muharrəm 1448", "16 iyun 2026"),
-              DiniGunCard("Aşura Günü", "Cümə axşamı", "10 Muharrəm 1448", "25 iyun 2026"),
-              DiniGunCard("Mevlid Kandili", "Bazarertəsi", "11 Rəbüiləvvəl 1448", "24 avqust 2026"),
-              DiniGunCard("Üç Aylar Başlanğıcı", "Cümə axşamı", "1 Rəcəb 1448", "10 dekabr 2026"),
-              DiniGunCard("Rəğaib Kandili", "Cümə axşamı", "1 Rəcəb 1448", "10 dekabr 2026"),
-            ],
-          ))
+          Positioned(
+            bottom: 80, left: -60,
+            child: Container(
+              width: 160, height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                    colors: [const Color(0xFF5B9BD5).withOpacity(0.06), Colors.transparent]),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Row(
+                    children: [
+                      const Text("Dini Günlər",
+                          style: TextStyle(fontSize: 20, fontFamily: 'MyFont2',
+                              fontWeight: FontWeight.bold, color: Colors.white)),
+                      const Spacer(),
+                      _toggleWidget(),
+                    ],
+                  ),
+                ),
 
+                const SizedBox(height: 16),
+
+                // Bölüm başlık
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(children: [
+                    const Text("2025 – 2026",
+                        style: TextStyle(fontFamily: 'MyFont2', fontSize: 12,
+                            color: Colors.white38, letterSpacing: 0.6)),
+                    const SizedBox(width: 10),
+                    Expanded(child: Container(height: 1, color: Colors.white.withOpacity(0.06))),
+                  ]),
+                ),
+
+                const SizedBox(height: 10),
+
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: [
+                      _diniGunCard("Miraç Kandili", "Cümə axşamı", "26 Rəcəb 1447", "15 Yanvar 2026"),
+                      _diniGunCard("Berat Kandili", "Bazarertəsi", "14 Şaban 1447", "2 Fevral 2026"),
+                      _diniGunCard("Ramazan Başlanğıcı", "Cümə axşamı", "1 Ramazan 1447", "19 Fevral 2026"),
+                      _diniGunCard("Qədr Gecəsi", "Bazarertəsi", "26 Ramazan 1447", "16 Mart 2026"),
+                      _diniGunCard("Ramazan Bayramı 1.günü", "Cümə", "1 Şəvval 1447", "20 Mart 2026"),
+                      _diniGunCard("Ramazan Bayramı 2.günü", "Şənbə", "2 Şəvval 1447", "21 Mart 2026"),
+                      _diniGunCard("Ramazan Bayramı 3.günü", "Bazar", "3 Şəvval 1447", "22 Mart 2026"),
+                      _diniGunCard("Tərviyə günü", "Bazarertəsi", "8 Zilhiccə 1447", "25 May 2026"),
+                      _diniGunCard("Ərəfə Günü", "Çərşənbə axşamı", "9 Zilhiccə 1447", "26 May 2026"),
+                      _diniGunCard("Qurban Bayramı 1.günü", "Çərşənbə", "10 Zilhiccə 1447", "27 May 2026"),
+                      _diniGunCard("Qurban Bayramı 2.günü", "Cümə axşamı", "11 Zilhiccə 1447", "28 May 2026"),
+                      _diniGunCard("Qurban Bayramı 3.günü", "Cümə", "12 Zilhiccə 1447", "29 May 2026"),
+                      _diniGunCard("Qurban Bayramı 4.günü", "Şənbə", "13 Zilhiccə 1447", "30 May 2026"),
+                      _diniGunCard("Hicri Yeni il günü", "Çərşənbə axşamı", "1 Muharrəm 1448", "16 İyun 2026"),
+                      _diniGunCard("Aşura Günü", "Cümə axşamı", "10 Muharrəm 1448", "25 İyun 2026"),
+                      _diniGunCard("Mevlid Kandili", "Bazarertəsi", "11 Rəbüiləvvəl 1448", "24 Avqust 2026"),
+                      _diniGunCard("Üç Aylar Başlanğıcı", "Cümə axşamı", "1 Rəcəb 1448", "10 Dekabr 2026"),
+                      _diniGunCard("Rəğaib Kandili", "Cümə axşamı", "1 Rəcəb 1448", "10 Dekabr 2026"),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
