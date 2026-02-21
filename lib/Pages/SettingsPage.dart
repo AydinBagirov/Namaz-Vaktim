@@ -108,7 +108,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             style: TextStyle(fontSize: 16, fontFamily: 'MyFont2',
                                 fontWeight: FontWeight.bold, color: Colors.white)),
                         const SizedBox(height: 4),
-                        const Text("Versiya 2.1.0",
+                        const Text("Versiya 2.2.0",
                             style: TextStyle(fontSize: 11, color: Color(0xFF4ECDC4), fontFamily: 'MyFont2')),
                       ],
                     ),
